@@ -40,6 +40,9 @@ const config: GatsbyConfig = {
       __key: "pages",
     },
   ],
+  flags: {
+    DEV_SSR: true,
+  },
 };
 
 export default config;
