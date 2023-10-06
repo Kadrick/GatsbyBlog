@@ -26,8 +26,10 @@ const IndexPage: React.FC<PageProps> = () => {
     <Basic>
       <VStack minH={"calc(100vh - 150px)"} justifyContent={"center"}>
         <VStack h={"100px"} justifyContent={"space-around"}>
-          <Heading as={"h2"}>코드 창고</Heading>
-          <Text>회사 다니기 싫다 / 돈 벌고 싶다 / 쉬고 싶다</Text>
+          <Heading as={"h2"}>가짜 개발자 이야기</Heading>
+          <Text>
+            회사 다니기 싫다 / 돈 벌고 싶다 / 쉬고 싶다 / 시간 참 빠르다
+          </Text>
         </VStack>
         <Center h={"70px"}>
           <SocialIcon
