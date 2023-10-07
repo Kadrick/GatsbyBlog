@@ -11,12 +11,454 @@ slug: InitialCommit
 
 ![banner](./banner.jpeg)
 
-판잣집을 지은 기분이다.
+## Markdown Test
 
-## 블로그의 제목에 관해서
+---
 
-...
+## Heading 2
 
-## 왜 Gatsby를 골랐을까?
+### Heading 3
 
-원래 React로 만들고 있던 블로그가 있었는데...
+#### Heading 4
+
+##### Heading 5
+
+###### Heading 6
+
+---
+
+> ???: 누군가는 새벽 3시 20분에 vscode와 obsidian을 쳐다보며 시간을 보낸다.
+
+**힘차고 굳센 아침**
+
+_미끄러진다_
+
+<Delete>strikethrough</Delete>
+
+---
+
+Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+
+---
+
+- List
+  - ListItem 1
+  - ListItem 2
+  - ListItem 3
+
+1. Ordered List
+
+   1. ListItem 1
+   2. ListItem 2
+   3. ListItem 3
+
+---
+
+<CH.Code>
+
+```cpp 9240.cpp
+/**
+ * @file 9240.cpp
+ * @author Kadrick (kbk2581553@gmail.com)
+ * @brief geometry
+ * @version 0.1
+ * @date 2022-11-24 16:24
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                   \
+    ios::sync_with_stdio(false); \
+    cin.tie(0);
+#define endl '\n'
+#define x first
+#define y second
+#define int long long
+#define point pair<long long, long long>
+
+enum DIR
+{
+    CW,
+    STRAIGHT,
+    CCW
+};
+
+int N;
+point pivot = {0, 50000};
+vector<point> points;
+
+int dist(const point &a, const point &b)
+{
+    return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+}
+
+int ccw(const point &left, const point &right)
+{
+    int zVal = left.x * right.y - left.y * right.x;
+
+    if (zVal < 0)
+        return DIR::CW;
+
+    if (zVal == 0)
+        return DIR::STRAIGHT;
+
+    if (zVal > 0)
+        return DIR::CCW;
+}
+
+int ccw(const point &src, const point &waypoint, const point &dst)
+{
+    pair<int, int> srcDstVec = {dst.x - src.x, dst.y - src.y};
+    pair<int, int> srcWayVec = {waypoint.x - src.x, waypoint.y - src.y};
+
+    int zVal = srcWayVec.x * srcDstVec.y - srcWayVec.y * srcDstVec.x;
+
+    if (zVal < 0)
+        return DIR::CW;
+
+    if (zVal == 0)
+        return DIR::STRAIGHT;
+
+    if (zVal > 0)
+        return DIR::CCW;
+}
+
+bool comp(const point &left, const point &right)
+{
+    if (left == pivot)
+        return true;
+    if (right == pivot)
+        return false;
+
+    if (ccw(pivot, left, right) == DIR::STRAIGHT)
+        return dist(pivot, left) < dist(pivot, right);
+
+    double leftRad = atan2(left.y - pivot.y, left.x - pivot.x);
+    double rightRad = atan2(right.y - pivot.y, right.x - pivot.x);
+
+    if (leftRad < 0)
+        leftRad = 2 * M_PI + leftRad;
+
+    if (rightRad < 0)
+        rightRad = 2 * M_PI + rightRad;
+
+    return leftRad < rightRad;
+}
+
+int32_t main(void)
+{
+    fastio;
+
+    cout << fixed;
+    cout.precision(10);
+
+    int N;
+    cin >> N;
+    points.resize(N);
+    pivot.y = LLONG_MAX;
+
+    for (int i = 0; i < N; i++)
+    {
+        cin >> points[i].x >> points[i].y;
+
+        // pivot
+        if (pivot.y > points[i].y)
+            pivot = points[i];
+        else if (pivot.y == points[i].y && pivot.x > points[i].x)
+            pivot = points[i];
+    }
+
+    // sorting by rad
+    sort(points.begin(), points.end(), comp);
+
+    vector<int> st;
+    st.push_back(0);
+    st.push_back(1);
+
+    int target = 2;
+
+    while (target < N)
+    {
+        while (st.size() >= 2)
+        {
+            int src, waypoint;
+            waypoint = st.back(), st.pop_back(), src = st.back();
+            if (ccw(points[src], points[waypoint], points[target]) == DIR::CCW)
+            {
+                st.push_back(waypoint);
+                break;
+            }
+        }
+
+        st.push_back(target);
+        target++;
+    }
+
+    if (st.size() == 2)
+    {
+        cout << sqrt(dist(points[st[1]], points[st[0]])) << endl;
+        return 0;
+    }
+
+    // rotating calipers
+    vector<point> convexHull;
+
+    for (int i = 0; i < st.size(); i++)
+        convexHull.push_back(points[st[i]]);
+
+    int left = min_element(convexHull.begin(), convexHull.end()) - convexHull.begin();
+    int right = max_element(convexHull.begin(), convexHull.end()) - convexHull.begin();
+
+    int maximum = 0;
+    pair<int, int> ans = {};
+
+    for (int i = 0; i < convexHull.size(); i++)
+    {
+        point ls = convexHull[left], le = convexHull[(left + 1) % convexHull.size()];
+        point rs = convexHull[right], re = convexHull[(right + 1) % convexHull.size()];
+
+        int now = dist(ls, rs);
+        maximum = max(maximum, now);
+
+        if (ccw(
+                {le.x - ls.x, le.y - ls.y},
+                {rs.x - re.x, rs.y - re.y}) == DIR::CCW)
+            left = (left + 1) % convexHull.size();
+        else
+            right = (right + 1) % convexHull.size();
+    }
+
+    cout << sqrt(maximum) << endl;
+
+    return 0;
+}
+```
+
+```go 1600.go
+/**
+ * @file 1600.go
+ * @author Kadrick (kbk2581553@gmail.com)
+ * @brief BFS
+ * @version 0.1
+ * @date 2022-04-08 14:09
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+)
+
+const inf int = math.MaxInt32
+
+//////////////////////////////////////////////////////////////
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+//////////////////////////////////////////////////////////////
+
+var (
+	scanner = bufio.NewScanner(os.Stdin)
+	stdout  = bufio.NewWriter(os.Stdout)
+)
+
+func nextInt() int {
+	scanner.Scan()
+	text := scanner.Text()
+	v, _ := strconv.Atoi(text)
+	return v
+}
+
+func nextString() string {
+	scanner.Scan()
+	text := scanner.Text()
+	return text
+}
+
+//////////////////////////////////////////////////////////////
+
+type move struct {
+	x int
+	y int
+}
+
+type trace struct {
+	x int
+	y int
+	k int
+}
+
+type element struct {
+	coordinate move
+	step       int
+	knight     int
+}
+
+var knightDir [8]move = [8]move{
+	{x: 2, y: 1},
+	{x: 1, y: 2},
+	{x: -1, y: 2},
+	{x: -2, y: 1},
+	{x: -2, y: -1},
+	{x: -1, y: -2},
+	{x: 1, y: -2},
+	{x: 2, y: -1},
+}
+
+var monkeyDir [4]move = [4]move{
+	{x: 1, y: 0},
+	{x: 0, y: 1},
+	{x: -1, y: 0},
+	{x: 0, y: -1},
+}
+
+type queue struct {
+	data []element
+}
+
+func NewQueue() *queue {
+	return &queue{
+		data: make([]element, 0),
+	}
+}
+
+func (q *queue) push(obj element) {
+	q.data = append(q.data, obj)
+}
+
+func (q *queue) empty() bool {
+	return len(q.data) == 0
+}
+
+func (q *queue) pop() element {
+	retData := q.data[0]
+	q.data = q.data[1:]
+	return retData
+}
+
+func inRange(x, y, w, h int) bool {
+	return (0 <= x && x < w && 0 <= y && y < h)
+}
+
+func checkTile(x, y, k, w, h int, visit map[trace]bool, board map[move]bool) bool {
+	_, visited := visit[trace{x: x, y: y, k: k}]
+	_, possible := board[move{x: x, y: y}]
+	return inRange(x, y, w, h) && !visited && possible
+}
+
+func main() {
+	scanner.Split(bufio.ScanWords)
+	defer stdout.Flush()
+
+	ans, k, w, h := 0, nextInt(), nextInt(), nextInt()
+
+	find := false
+	q := NewQueue()
+	end := move{x: w - 1, y: h - 1}
+	visit, board := make(map[trace]bool), make(map[move]bool)
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			possible := nextInt()
+			if possible == 0 {
+				board[move{x: j, y: i}] = true
+			}
+		}
+	}
+
+	q.push(element{
+		coordinate: move{x: 0, y: 0},
+		step:       0,
+		knight:     0,
+	})
+
+	visit[trace{}] = true
+
+	for !q.empty() {
+		current := q.pop()
+
+		if current.coordinate == end {
+			find = true
+			ans = current.step
+			break
+		}
+
+		if current.knight < k {
+			for i := 0; i < 8; i++ {
+				nx := current.coordinate.x + knightDir[i].x
+				ny := current.coordinate.y + knightDir[i].y
+
+				if checkTile(nx, ny, current.knight+1, w, h, visit, board) {
+					next := element{
+						coordinate: move{x: nx, y: ny},
+						step:       current.step + 1,
+						knight:     current.knight + 1,
+					}
+
+					q.push(next)
+					visit[trace{x: nx, y: ny, k: next.knight}] = true
+				}
+			}
+		}
+
+		for i := 0; i < 4; i++ {
+			nx := current.coordinate.x + monkeyDir[i].x
+			ny := current.coordinate.y + monkeyDir[i].y
+
+			if checkTile(nx, ny, current.knight, w, h, visit, board) {
+				next := element{
+					coordinate: move{x: nx, y: ny},
+					step:       current.step + 1,
+					knight:     current.knight,
+				}
+
+				q.push(next)
+				visit[trace{x: nx, y: ny, k: next.knight}] = true
+			}
+		}
+	}
+
+	if find {
+		fmt.Fprintln(stdout, ans)
+	} else {
+		fmt.Fprintln(stdout, -1)
+	}
+
+	return
+}
+```
+
+</CH.Code>
+
+---
+
+inline math: <Math type={"inline"} expression={"(\\alpha\\beta\\gamma) + \\cfrac{a}{1 + \\cfrac{1}{b}} - \\sqrt[3]{x}"} />
+
+block math:
+
+<Math
+  type={"block"}
+  expression={`\\begin{equation}
+    S (ω)=1.466, H_s^2 ,  \\frac{ω_0^5}{ω^6 }  , e^[-3^ { ω/(ω_0 )]^2}
+    \\end{equation}`}
+/>

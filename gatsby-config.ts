@@ -1,4 +1,6 @@
 import type { GatsbyConfig } from "gatsby";
+import { remarkCodeHike } from "@code-hike/mdx";
+import Ayu from "./ayu-mirage.json";
 
 const config: GatsbyConfig = {
   siteMetadata: {
@@ -25,6 +27,17 @@ const config: GatsbyConfig = {
       options: {
         extensions: [".mdx", ".md"],
         gatsbyRemarkPlugins: ["gatsby-remark-images"],
+        mdxOptions: {
+          remarkPlugins: [
+            [
+              remarkCodeHike,
+              {
+                theme: Ayu,
+                showCopyButton: true,
+              },
+            ],
+          ],
+        },
       },
     },
     "gatsby-plugin-sharp",
