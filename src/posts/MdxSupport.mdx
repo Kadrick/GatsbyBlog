@@ -1,0 +1,194 @@
+---
+title: MDX Support List
+slug: mdx-support-list
+---
+
+## Markdown Test
+
+---
+
+## Heading 2
+
+### Heading 3
+
+#### Heading 4
+
+##### Heading 5
+
+###### Heading 6
+
+---
+
+> ???: 누군가는 새벽 3시 20분에 vscode와 obsidian을 쳐다보며 시간을 보낸다.
+
+**힘차고 굳센 아침**
+
+_미끄러진다_
+
+<Delete>strikethrough</Delete>
+
+`code`
+
+---
+
+Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+
+---
+
+- List
+  - ListItem 1
+  - ListItem 2
+  - ListItem 3
+
+1. Ordered List
+
+   1. ListItem 1
+   2. ListItem 2
+   3. ListItem 3
+
+---
+
+| element 1 | element 2 | element 3 |
+| :-------: | :-------: | :-------: |
+|   value   |   value   |   value   |
+
+---
+
+```cpp example.cpp
+#include <iostream>
+#include <cmath>
+
+using namespace std;
+
+int convertBinarytoOctal(long long);
+int main()
+{
+    long long binaryNumber;
+
+    cout << "Enter a binary number: ";
+    cin >> binaryNumber;
+
+    cout << binaryNumber << " in binary = " << convertBinarytoOctal(binaryNumber) << " in octal ";
+
+    return 0;
+}
+
+int convertBinarytoOctal(long long binaryNumber)
+{
+    int octalNumber = 0, decimalNumber = 0, i = 0;
+
+    while(binaryNumber != 0)
+    {
+        decimalNumber += (binaryNumber%10) * pow(2,i);
+        ++i;
+        binaryNumber/=10;
+    }
+
+    i = 1;
+
+    while (decimalNumber != 0)
+    {
+        octalNumber += (decimalNumber % 8) * i;
+        decimalNumber /= 8;
+        i *= 10;
+    }
+
+    return octalNumber;
+}
+```
+
+<CH.Code>
+
+```cpp example.cpp
+#include <iostream>
+#include <cmath>
+
+using namespace std;
+
+int convertBinarytoOctal(long long);
+int main()
+{
+    long long binaryNumber;
+
+    cout << "Enter a binary number: ";
+    cin >> binaryNumber;
+
+    cout << binaryNumber << " in binary = " << convertBinarytoOctal(binaryNumber) << " in octal ";
+
+    return 0;
+}
+
+int convertBinarytoOctal(long long binaryNumber)
+{
+    int octalNumber = 0, decimalNumber = 0, i = 0;
+
+    while(binaryNumber != 0)
+    {
+        decimalNumber += (binaryNumber%10) * pow(2,i);
+        ++i;
+        binaryNumber/=10;
+    }
+
+    i = 1;
+
+    while (decimalNumber != 0)
+    {
+        octalNumber += (decimalNumber % 8) * i;
+        decimalNumber /= 8;
+        i *= 10;
+    }
+
+    return octalNumber;
+}
+```
+
+```go example.go
+package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func worker(id int) {
+    fmt.Printf("Worker %d starting\n", id)
+
+    time.Sleep(time.Second)
+    fmt.Printf("Worker %d done\n", id)
+}
+
+func main() {
+
+    var wg sync.WaitGroup
+
+    for i := 1; i <= 5; i++ {
+        wg.Add(1)
+
+        i := i
+
+        go func() {
+            defer wg.Done()
+            worker(i)
+        }()
+    }
+
+    wg.Wait()
+
+}
+```
+
+</CH.Code>
+
+---
+
+inline math: <Math type={"inline"} expression={"(\\alpha\\beta\\gamma) + \\cfrac{a}{1 + \\cfrac{1}{b}} - \\sqrt[3]{x}"} />
+
+block math:
+
+<Math
+  type={"block"}
+  expression={`\\begin{equation}
+    S (ω)=1.466, H_s^2 ,  \\frac{ω_0^5}{ω^6 }  , e^[-3^ { ω/(ω_0 )]^2}
+    \\end{equation}`}
+/>

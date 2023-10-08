@@ -11,7 +11,7 @@ type LayoutProps = {
 const Tab: React.FC<LayoutProps> = ({ tabName, children }) => {
   return (
     <Basic>
-      <Container pt={"50px"} pb={"70px"} centerContent>
+      <Container pt={"50px"} centerContent>
         <Heading as={"h2"}>{tabName}</Heading>
       </Container>
       <Container>{children}</Container>

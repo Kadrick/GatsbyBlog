@@ -33,7 +33,7 @@ const Post: React.FC<PageProps<{ mdx: Queries.Mdx }>> = ({
     "December",
   ];
 
-  if (!data.mdx.frontmatter || !data.mdx.frontmatter.date) {
+  if (!data.mdx.frontmatter) {
     return (
       <Basic>
         <VStack h={"100%"} justifyContent={"center"}>
@@ -51,19 +51,23 @@ const Post: React.FC<PageProps<{ mdx: Queries.Mdx }>> = ({
     <Basic>
       <Container pt={"80px"}>
         <Heading>{data.mdx.frontmatter.title}</Heading>
-        <Heading mt={"40px"} size={"18px"} color={"gray"}>
-          {month[new Date(data.mdx.frontmatter.date?.toString()).getMonth()]}{" "}
-          {new Date(data.mdx.frontmatter.date?.toString()).getDate()}
-          {", "}
-          {new Date(data.mdx.frontmatter.date?.toString()).getFullYear()}
-        </Heading>
-        <Wrap mt={"20px"}>
-          {data.mdx.frontmatter.tags?.map((value, key) => (
-            <WrapItem key={key}>
-              <Tag>{value}</Tag>
-            </WrapItem>
-          ))}
-        </Wrap>
+        {data.mdx.frontmatter.date && (
+          <Heading mt={"40px"} size={"18px"} color={"gray"}>
+            {month[new Date(data.mdx.frontmatter.date?.toString()).getMonth()]}{" "}
+            {new Date(data.mdx.frontmatter.date?.toString()).getDate()}
+            {", "}
+            {new Date(data.mdx.frontmatter.date?.toString()).getFullYear()}
+          </Heading>
+        )}
+        {data.mdx.frontmatter.tags && (
+          <Wrap mt={"20px"}>
+            {data.mdx.frontmatter.tags?.map((value, key) => (
+              <WrapItem key={key}>
+                <Tag>{value}</Tag>
+              </WrapItem>
+            ))}
+          </Wrap>
+        )}
       </Container>
       <Container mt={"70px"}>
         <MDXProvider components={MdxComponents}>{children}</MDXProvider>
