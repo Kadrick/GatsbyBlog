@@ -2,10 +2,65 @@ import React from "react";
 
 import Tab from "../layout/tab";
 
-import { Container } from "@chakra-ui/react";
+import {
+  Container,
+  Heading,
+  VStack,
+  Text,
+  Box,
+  Flex,
+  Link,
+  HStack,
+  Icon,
+  Wrap,
+} from "@chakra-ui/react";
+
+import { BiLogoLinkedinSquare } from "react-icons/bi";
+import { FiGithub } from "react-icons/fi";
+import { HiOutlineMail } from "react-icons/hi";
+import { FaLocationPin } from "react-icons/fa6";
+import { IconType } from "react-icons";
+
+type IconProps = {
+  icon: IconType;
+  link: string;
+  text: string;
+};
+
+const SocialIcon: React.FC<IconProps> = ({ icon, link, text }) => {
+  return (
+    <Link href={link} target={"_blank"}>
+      <Flex>
+        <Icon mr={"5px"} w={"24px"} h={"24px"} as={icon} />
+        <Text>{text}</Text>
+      </Flex>
+    </Link>
+  );
+};
+
+type InfoBoxProps = {
+  children: React.ReactNode | React.ReactNode[];
+  title: string;
+};
+
+const InfoBox: React.FC<InfoBoxProps> = ({ title, children }) => {
+  return (
+    <Box w={"100%"}>
+      <Heading>{title}</Heading>
+      <VStack mt={"20px"} ml={"12px"} spacing={"20px"} alignItems={"left"}>
+        {children}
+      </VStack>
+    </Box>
+  );
+};
 
 const cv_info = {
+  aboutMe: {
+    name: "강보권",
+    description: "I - 95% / N - 54% / T - 88% /  P - 51% / A - 54%",
+  },
   contact: {
+    address: "서울, 대한민국",
     email: "kbk2581553@gmail.com",
     github: "https://github.com/Kadrick",
     linkedIn: "https://www.linkedin.com/in/보권-강-7278a6227/",
@@ -13,32 +68,132 @@ const cv_info = {
   experience: [
     {
       Affiliation: "Markany",
-      position: "Developer / 개발자 ",
-      start: "2022-04",
+      position: "개발자 / Developer",
+      start: "April, 2022",
       end: "",
-      description: "",
+      description: [
+        "워터마크 삽입 및 미디어 스트리밍 시스템 구축",
+        "W3C MSE, EME 데모 플레이어 제작",
+        "CMS 유지보수",
+      ],
     },
   ],
   education: [
     {
-      Affiliation: "Kyungpook National University",
-      degree: "Bachelor",
-      major: "Computer Science",
-      start: "2020-03",
+      Affiliation: "경북대학교",
+      degree: "학사",
+      major: "컴퓨터 과학",
+      start: "March, 2020",
       end: "",
       gpa: "yet",
     },
   ],
   skills: {
-    experienced: ["C++", "go", "AWS"],
+    experienced: ["C++", "Go", "AWS"],
     intermediate: ["C", "DirectX"],
   },
 };
 
 const CV: React.FC<{}> = ({}) => {
   return (
-    <Tab tabName={"CV"}>
-      <Container w={"container.md"} mt={"70px"}></Container>
+    <Tab
+      tabName={cv_info.aboutMe.name}
+      description={cv_info.aboutMe.description}
+    >
+      <Container w={"container.md"} mt={"70px"}>
+        <VStack spacing={"70px"}>
+          <InfoBox title={"Contact"}>
+            <HStack w={"100%"} justifyContent={"space-between"}>
+              <SocialIcon
+                icon={FaLocationPin}
+                link={""}
+                text={cv_info.contact.address}
+              />
+              <SocialIcon
+                icon={FiGithub}
+                link={cv_info.contact.github}
+                text={"Github"}
+              />
+
+              <SocialIcon
+                icon={HiOutlineMail}
+                link={"mailto:" + cv_info.contact.email}
+                text={cv_info.contact.email}
+              />
+              <SocialIcon
+                icon={BiLogoLinkedinSquare}
+                link={cv_info.contact.linkedIn}
+                text={"LinkedIn"}
+              />
+            </HStack>
+          </InfoBox>
+
+          <InfoBox title={"Experience"}>
+            {cv_info.experience.map((value, key) => (
+              <Box>
+                <Flex justifyContent={"space-between"}>
+                  <Flex>
+                    <Heading size={"md"} mr={"3px"}>
+                      {value.Affiliation}
+                    </Heading>
+                    <Text>{"- " + value.position}</Text>
+                  </Flex>
+                  <Text>
+                    {value.start} ~ {value.end}
+                  </Text>
+                </Flex>
+                <Box mt={"5px"}>
+                  {value.description.map((workDetail, idx) => (
+                    <Text pt={"5px"} pl={"10px"} key={idx}>
+                      - {workDetail}
+                    </Text>
+                  ))}
+                </Box>
+              </Box>
+            ))}
+          </InfoBox>
+
+          <InfoBox title={"Education"}>
+            {cv_info.education.map((value, key) => (
+              <Box>
+                <Flex justifyContent={"space-between"}>
+                  <Heading size={"md"} mr={"3px"}>
+                    {value.Affiliation}
+                  </Heading>
+
+                  <Text>
+                    {value.start} ~ {value.end}
+                  </Text>
+                </Flex>
+                <Text p={"4px"}>{`${value.major} - ${value.degree}`}</Text>
+              </Box>
+            ))}
+          </InfoBox>
+
+          <InfoBox title={"Skills"}>
+            <Flex justifyContent={"space-between"}>
+              <Flex>
+                {cv_info.skills.experienced.map((value, key) => (
+                  <Text mr={"10px"} key={key}>
+                    {value}
+                  </Text>
+                ))}
+              </Flex>
+              <Text>experienced</Text>
+            </Flex>
+            <Flex justifyContent={"space-between"}>
+              <Flex>
+                {cv_info.skills.intermediate.map((value, key) => (
+                  <Text mr={"10px"} key={key}>
+                    {value}
+                  </Text>
+                ))}
+              </Flex>
+              <Text>intermediate</Text>
+            </Flex>
+          </InfoBox>
+        </VStack>
+      </Container>
     </Tab>
   );
 };

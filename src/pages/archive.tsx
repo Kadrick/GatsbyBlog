@@ -39,8 +39,6 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
       const prevData = displayTarget.get(0);
       prevData?.push(info);
 
-      console.log(prevData);
-
       return;
     }
 
@@ -76,7 +74,10 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
   });
 
   return (
-    <Tab tabName={"Archive"}>
+    <Tab
+      tabName={"Archive"}
+      description={"원숭이가 셰익스피어의 희곡을 칠 확률"}
+    >
       <Container w={"container.md"}>
         {[...displayTarget.entries()].map((yearSet, key) => {
           if (yearSet[0] !== 0) {
