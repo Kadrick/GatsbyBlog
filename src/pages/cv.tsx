@@ -47,7 +47,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({ title, children }) => {
   return (
     <Box w={"100%"}>
       <Heading>{title}</Heading>
-      <VStack mt={"20px"} ml={"12px"} spacing={"20px"} alignItems={"left"}>
+      <VStack mt={"20px"} spacing={"20px"} alignItems={"left"}>
         {children}
       </VStack>
     </Box>
