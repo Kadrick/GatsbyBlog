@@ -13,6 +13,7 @@ import {
   HStack,
   Icon,
   Wrap,
+  ChakraProps,
 } from "@chakra-ui/react";
 
 import { BiLogoLinkedinSquare } from "react-icons/bi";
@@ -31,8 +32,10 @@ const SocialIcon: React.FC<IconProps> = ({ icon, link, text }) => {
   return (
     <Link href={link} target={"_blank"}>
       <Flex>
-        <Icon mr={"5px"} w={"24px"} h={"24px"} as={icon} />
-        <Text>{text}</Text>
+        <Text mr={"5px"} textAlign={"right"}>
+          {text}
+        </Text>
+        <Icon w={"24px"} h={"24px"} as={icon} />
       </Flex>
     </Link>
   );
@@ -41,13 +44,19 @@ const SocialIcon: React.FC<IconProps> = ({ icon, link, text }) => {
 type InfoBoxProps = {
   children: React.ReactNode | React.ReactNode[];
   title: string;
+  align?: "left" | "right";
 };
 
-const InfoBox: React.FC<InfoBoxProps> = ({ title, children }) => {
+const InfoBox: React.FC<InfoBoxProps & ChakraProps> = ({
+  w,
+  title,
+  children,
+  align = "left",
+}) => {
   return (
-    <Box w={"100%"}>
-      <Heading>{title}</Heading>
-      <VStack mt={"20px"} spacing={"20px"} alignItems={"left"}>
+    <Box w={w}>
+      <Heading textAlign={align}>{title}</Heading>
+      <VStack mt={"20px"} spacing={"20px"} alignItems={align}>
         {children}
       </VStack>
     </Box>
@@ -55,9 +64,16 @@ const InfoBox: React.FC<InfoBoxProps> = ({ title, children }) => {
 };
 
 const cv_info = {
-  aboutMe: {
+  title: {
     name: "강보권",
-    description: "I - 95% / N - 54% / T - 88% /  P - 51% / A - 54%",
+    description: "INTP-A / I - 95% / N - 54% / T - 88% /  P - 51% / A - 54%",
+  },
+  aboutMe: {
+    description: [
+      "산업기능요원으로 복무 중인 1년차 개발자입니다.",
+      "C++와 Golang을 주로 사용합니다.",
+      "게임 개발과 네트워킹 기술에 관심이 있습니다.",
+    ],
   },
   contact: {
     address: "서울, 대한민국",
@@ -72,6 +88,7 @@ const cv_info = {
       start: "April, 2022",
       end: "",
       description: [
+        "산업기능요원으로 복무",
         "워터마크 삽입 및 미디어 스트리밍 시스템 구축",
         "W3C MSE, EME 데모 플레이어 제작",
         "CMS 유지보수",
@@ -96,39 +113,51 @@ const cv_info = {
 
 const CV: React.FC<{}> = ({}) => {
   return (
-    <Tab
-      tabName={cv_info.aboutMe.name}
-      description={cv_info.aboutMe.description}
-    >
+    <Tab tabName={cv_info.title.name} description={cv_info.title.description}>
       <Container w={"container.md"} mt={"70px"}>
         <VStack spacing={"70px"}>
-          <InfoBox title={"Contact"}>
-            <HStack w={"100%"} justifyContent={"space-between"}>
-              <SocialIcon
-                icon={FaLocationPin}
-                link={""}
-                text={cv_info.contact.address}
-              />
-              <SocialIcon
-                icon={FiGithub}
-                link={cv_info.contact.github}
-                text={"Github"}
-              />
+          <HStack
+            w={"100%"}
+            h={"fit-content"}
+            alignItems={"flex-start"}
+            justifyContent={"space-between"}
+          >
+            <InfoBox title={"About..."}>
+              <VStack alignItems={"start"}>
+                {cv_info.aboutMe.description.map((content, key) => (
+                  <Text textAlign={"left"} key={key}>
+                    {content}
+                  </Text>
+                ))}
+              </VStack>
+            </InfoBox>
+            <InfoBox title={"Contact"} align={"right"}>
+              <VStack alignItems={"end"}>
+                <SocialIcon
+                  icon={FaLocationPin}
+                  link={""}
+                  text={cv_info.contact.address}
+                />
+                <SocialIcon
+                  icon={FiGithub}
+                  link={cv_info.contact.github}
+                  text={"Github"}
+                />
+                <SocialIcon
+                  icon={HiOutlineMail}
+                  link={"mailto:" + cv_info.contact.email}
+                  text={cv_info.contact.email}
+                />
+                <SocialIcon
+                  icon={BiLogoLinkedinSquare}
+                  link={cv_info.contact.linkedIn}
+                  text={"LinkedIn"}
+                />
+              </VStack>
+            </InfoBox>
+          </HStack>
 
-              <SocialIcon
-                icon={HiOutlineMail}
-                link={"mailto:" + cv_info.contact.email}
-                text={cv_info.contact.email}
-              />
-              <SocialIcon
-                icon={BiLogoLinkedinSquare}
-                link={cv_info.contact.linkedIn}
-                text={"LinkedIn"}
-              />
-            </HStack>
-          </InfoBox>
-
-          <InfoBox title={"Experience"}>
+          <InfoBox w={"100%"} title={"Experience"}>
             {cv_info.experience.map((value, key) => (
               <Box>
                 <Flex justifyContent={"space-between"}>
@@ -153,7 +182,7 @@ const CV: React.FC<{}> = ({}) => {
             ))}
           </InfoBox>
 
-          <InfoBox title={"Education"}>
+          <InfoBox w={"100%"} title={"Education"}>
             {cv_info.education.map((value, key) => (
               <Box>
                 <Flex justifyContent={"space-between"}>
@@ -170,7 +199,7 @@ const CV: React.FC<{}> = ({}) => {
             ))}
           </InfoBox>
 
-          <InfoBox title={"Skills"}>
+          <InfoBox w={"100%"} title={"Skills"}>
             <Flex justifyContent={"space-between"}>
               <Flex>
                 {cv_info.skills.experienced.map((value, key) => (
