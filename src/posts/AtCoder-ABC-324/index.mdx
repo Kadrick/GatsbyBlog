@@ -1,0 +1,261 @@
+---
+title: AtCoder ABC 324
+tags:
+  - AtCoder
+  - Problem Solving
+date: 2023-10-15
+description: AtCoder ABC 324 풀이
+slug: atcoder-abc-324
+---
+
+import { Link } from "@chakra-ui/react";
+
+### <Link href={"https://atcoder.jp/contests/abc324/tasks"} target={"\_blank"}>AtCoder 324 - Link</Link>
+
+### 결과
+
+Points : 600  
+Rank : 4418
+
+교훈? : 글을 차분하게 읽어봅시다.
+
+### 풀이
+
+#### A - Same
+
+문제: 당신은 반복문을 돌릴 수 있나요?  
+대답: 네.
+
+#### B - 3-smooth Numbers
+
+문제: 당신은 2와 3으로 수를 나눌 수 있나요?  
+대답: 네.
+
+#### C - Error Correction
+
+문제에서 정의한 조건에 부합한지 체크하고, map 으로 중복 검사  
+사실상 구현인데, 문제 잘못 읽고 엉뚱하게 구현해서 자꾸 틀렸다.
+
+#### D - Square Permutation
+
+S의 오름차순 정렬은 가장 작은 수가 되고, 내림차순은 가장 큰 수가 된다.
+
+이를 통해 등장할 수 있는 수의 범위를 정할 수 있고, 해당 범위 내에 있는 수들 중에서 구성이 S와 같고 제곱수 인 수들을 구하면 된다.
+
+---
+
+#### Code
+
+<CH.Code>
+
+```cpp a.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+    ios::sync_with_stdio(false);                                               \
+    cin.tie(0);
+#define endl '\n'
+
+int main(void) {
+    fastio;
+
+    int n;
+    cin >> n;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    for (int i = 0; i < n - 1; i++) {
+        if (arr[i] != arr[i + 1]) {
+            cout << "No" << endl;
+            return 0;
+        }
+    }
+
+    cout << "Yes" << endl;
+
+    return 0;
+}
+```
+
+```cpp b.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+    ios::sync_with_stdio(false);                                               \
+    cin.tie(0);
+#define endl '\n'
+
+int main(void) {
+    fastio;
+
+    long long n;
+    cin >> n;
+
+    int cnt = 0;
+    int arr[2] = {2, 3};
+
+    while (n != 1) {
+        if (n % arr[cnt] != 0) {
+
+            if (cnt) {
+                cout << "No" << endl;
+                return 0;
+            }
+            cnt++;
+        } else
+            n /= arr[cnt];
+    }
+
+    cout << "Yes" << endl;
+
+    return 0;
+}
+```
+
+```cpp c.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+    ios::sync_with_stdio(false);                                               \
+    cin.tie(0);
+#define endl '\n'
+
+bool check(const string &origin, const string &t) {
+    if (origin == t)
+        return true;
+
+    if (t == t[0] + origin)
+        return true;
+
+    // add
+    if (origin.length() < t.length()) {
+        int shield = 0;
+        for (int i = 0; i < t.size(); i++) {
+            if (origin[i - shield] != t[i]) {
+                if (!shield)
+                    shield++;
+                else
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    // delete
+    if (origin.length() > t.length()) {
+        int shield = 0;
+        for (int i = 0; i < origin.size(); i++) {
+            if (origin[i] != t[i - shield]) {
+                if (!shield)
+                    shield++;
+                else
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    // change
+    if (origin.length() == t.length()) {
+        bool shield = true;
+        for (int i = 0; i < origin.length(); i++) {
+            if (origin[i] != t[i]) {
+                if (shield)
+                    shield = false;
+                else
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+int main(void) {
+    fastio;
+
+    int n;
+    string aoki;
+    cin >> n >> aoki;
+
+    vector<int> ans;
+    vector<string> arr(n);
+    for (int i = 0; i < n; i++)
+        cin >> arr[i];
+
+    unordered_map<string, int> um;
+    for (int i = 0; i < n; i++) {
+
+        if (um.find(arr[i]) != um.end()) {
+            ans.push_back(i);
+            continue;
+        }
+
+        bool flag = check(arr[i], aoki);
+
+        if (flag) {
+            ans.push_back(i);
+            um[arr[i]] = i;
+        }
+    }
+
+    cout << ans.size() << endl;
+    for (int i = 0; i < ans.size(); i++)
+        cout << ans[i] + 1 << " ";
+
+    return 0;
+}
+```
+
+```cpp d.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+    ios::sync_with_stdio(false);                                               \
+    cin.tie(0);
+#define endl '\n'
+
+int main(void) {
+    fastio;
+
+    int n;
+    cin >> n;
+    string digit;
+    cin >> digit;
+
+    sort(digit.begin(), digit.end(),
+         [](const char &left, const char &right) -> bool {
+             return left > right;
+         });
+    long long maxV = floor(sqrt(stoll(digit)));
+
+    sort(digit.begin(), digit.end());
+    long long minV = ceil(sqrt(stoll(digit)));
+
+    int cnt = 0;
+
+    for (long long i = minV; i <= maxV; i++) {
+
+        string target = to_string((long long)pow(i, 2));
+        while (target.length() < n)
+            target = "0" + target;
+
+        sort(target.begin(), target.end());
+        if (target == digit)
+            cnt++;
+    }
+
+    cout << cnt << endl;
+
+    return 0;
+}
+```
+
+</CH.Code>

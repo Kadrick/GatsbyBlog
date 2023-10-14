@@ -6,7 +6,15 @@ const Footer: React.FC<{}> = () => {
   return (
     <Center w={"100vw"} h={"100px"}>
       <Text color={"gray"} fontSize={"15px"} textAlign={"center"}>
-        Designed by{" "}
+        Inspired by{" "}
+        <Link
+          fontWeight={"bold"}
+          href={"https://github.com/526avijitgupta/gokarna"}
+          target={"_blank"}
+        >
+          Gokarna
+        </Link>{" "}
+        & CSS by{" "}
         <Link
           fontWeight={"bold"}
           href={"https://github.com/kasterra"}
@@ -14,7 +22,7 @@ const Footer: React.FC<{}> = () => {
         >
           Kasterra
         </Link>
-        <br /> ©{" "}
+        <br />©{" "}
         <Link
           fontWeight={"bold"}
           href={"https://github.com/Kadrick"}

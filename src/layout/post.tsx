@@ -60,7 +60,7 @@ const Post: React.FC<
         }
         description={data.mdx.frontmatter.description || ""}
       />
-      <Container pt={"80px"}>
+      <Container pt={"50px"}>
         <Heading>{data.mdx.frontmatter.title}</Heading>
         {data.mdx.frontmatter.date && (
           <Heading mt={"40px"} size={"18px"} color={"gray"}>
@@ -80,7 +80,7 @@ const Post: React.FC<
           </Wrap>
         )}
       </Container>
-      <Container mt={"70px"}>
+      <Container mt={"50px"}>
         <MDXProvider components={MdxComponents}>{children}</MDXProvider>
       </Container>
     </Basic>
