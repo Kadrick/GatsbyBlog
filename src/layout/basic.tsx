@@ -4,6 +4,7 @@ import { Box, Container } from "@chakra-ui/react";
 
 import Header from "../components/common/header";
 import Footer from "../components/common/footer";
+import Seo from "./seo";
 
 type LayoutProps = {
   children: React.ReactNode | React.ReactNode[];

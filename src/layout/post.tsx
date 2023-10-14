@@ -13,11 +13,14 @@ import {
   WrapItem,
   Tag,
 } from "@chakra-ui/react";
+import Seo from "./seo";
 
-const Post: React.FC<PageProps<{ mdx: Queries.Mdx }>> = ({
-  data,
-  children,
-}) => {
+const Post: React.FC<
+  PageProps<{
+    mdx: Queries.Mdx;
+    site: { siteMetadata: Queries.SiteSiteMetadata };
+  }>
+> = ({ data, children }) => {
   const month = [
     "January",
     "February",
@@ -49,6 +52,14 @@ const Post: React.FC<PageProps<{ mdx: Queries.Mdx }>> = ({
 
   return (
     <Basic>
+      <Seo
+        title={data.mdx.frontmatter.title || ""}
+        url={
+          (data.site.siteMetadata.siteUrl || "") +
+          (data.mdx.frontmatter.slug || "")
+        }
+        description={data.mdx.frontmatter.description || ""}
+      />
       <Container pt={"80px"}>
         <Heading>{data.mdx.frontmatter.title}</Heading>
         {data.mdx.frontmatter.date && (
@@ -80,6 +91,11 @@ export default Post;
 
 export const query = graphql`
   query ($id: String!) {
+    site {
+      siteMetadata {
+        siteUrl
+      }
+    }
     mdx(id: { eq: $id }) {
       body
       frontmatter {
