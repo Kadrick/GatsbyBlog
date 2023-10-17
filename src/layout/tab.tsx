@@ -16,7 +16,7 @@ const Tab: React.FC<LayoutProps> = ({ tabName, description, children }) => {
         <Heading as={"h2"}>{tabName}</Heading>
         {description && <Text>{description}</Text>}
       </Container>
-      <Container>{children}</Container>
+      <Container w={"100vw"} centerContent>{children}</Container>
     </Basic>
   );
 };

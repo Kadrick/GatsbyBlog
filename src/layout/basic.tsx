@@ -27,7 +27,7 @@ const Basic: React.FC<LayoutProps> = ({ children }) => {
         variants={variants}
         transition={{ duration: 0.4, type: "easeInOut" }}
       >
-        <Container minH={"calc(100vh - 150px)"}>{children}</Container>
+        <Container minH={"calc(100vh - 150px)"} centerContent>{children}</Container>
       </motion.div>
       <Footer />
     </Box>

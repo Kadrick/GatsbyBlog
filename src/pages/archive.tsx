@@ -78,20 +78,20 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
       tabName={"Archive"}
       description={"원숭이가 셰익스피어의 희곡을 칠 확률"}
     >
-      <Container w={"container.md"}>
+      <Container>
         {[...displayTarget.entries()].map((yearSet, key) => {
           if (yearSet[0] !== 0) {
             return (
-              <Box w={"100%"} mt={"70px"} key={key}>
+              <Box  mt={"70px"} key={key}>
                 <Heading>{yearSet[0]}</Heading>
                 {yearSet[1].map((info, key) => (
                   <Box mt={"20px"} key={key}>
                     <Link to={"/post/" + info.slug}>
-                      <Flex ml={"15px"}>
-                        <Text w={"500px"} size={"17px"}>
+                      <Flex ml={"15px"} justifyContent={"space-between"}>
+                        <Text size={"17px"}>
                           {info.title}
                         </Text>
-                        <Text w={"150px"}>{info.date}</Text>
+                        <Text>{info.date}</Text>
                       </Flex>
                     </Link>
                   </Box>
@@ -111,7 +111,6 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
                     <Text w={"500px"} size={"17px"}>
                       {info.title}
                     </Text>
-                    <Text w={"150px"}>{info.date}</Text>
                   </Flex>
                 </Link>
               </Box>

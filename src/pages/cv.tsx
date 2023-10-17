@@ -54,12 +54,12 @@ const InfoBox: React.FC<InfoBoxProps & ChakraProps> = ({
   align = "left",
 }) => {
   return (
-    <Box w={w}>
+    <Container w={w}>
       <Heading textAlign={align}>{title}</Heading>
       <VStack mt={"20px"} spacing={"20px"} alignItems={align}>
         {children}
       </VStack>
-    </Box>
+    </Container>
   );
 };
 
@@ -114,50 +114,44 @@ const cv_info = {
 const CV: React.FC<{}> = ({}) => {
   return (
     <Tab tabName={cv_info.title.name} description={cv_info.title.description}>
-      <Container w={"container.md"} mt={"70px"}>
+      <Container mt={"70px"}>
         <VStack spacing={"70px"}>
-          <HStack
-            w={"100%"}
-            h={"fit-content"}
-            alignItems={"flex-start"}
-            justifyContent={"space-between"}
-          >
-            <InfoBox title={"About..."}>
-              <VStack alignItems={"start"}>
-                {cv_info.aboutMe.description.map((content, key) => (
-                  <Text textAlign={"left"} key={key}>
-                    {content}
-                  </Text>
-                ))}
-              </VStack>
-            </InfoBox>
-            <InfoBox title={"Contact"} align={"right"}>
-              <VStack alignItems={"end"}>
-                <SocialIcon
-                  icon={FaLocationPin}
-                  link={""}
-                  text={cv_info.contact.address}
-                />
-                <SocialIcon
-                  icon={FiGithub}
-                  link={cv_info.contact.github}
-                  text={"Github"}
-                />
-                <SocialIcon
-                  icon={HiOutlineMail}
-                  link={"mailto:" + cv_info.contact.email}
-                  text={cv_info.contact.email}
-                />
-                <SocialIcon
-                  icon={BiLogoLinkedinSquare}
-                  link={cv_info.contact.linkedIn}
-                  text={"LinkedIn"}
-                />
-              </VStack>
-            </InfoBox>
-          </HStack>
+          <InfoBox title={"About..."}>
+            <VStack alignItems={"start"}>
+              {cv_info.aboutMe.description.map((content, key) => (
+                <Text textAlign={"left"} key={key}>
+                  {content}
+                </Text>
+              ))}
+            </VStack>
+          </InfoBox>
 
-          <InfoBox w={"100%"} title={"Experience"}>
+          <InfoBox title={"Contact"}>
+            <VStack alignItems={"start"}>
+              <SocialIcon
+                icon={FaLocationPin}
+                link={""}
+                text={cv_info.contact.address}
+              />
+              <SocialIcon
+                icon={FiGithub}
+                link={cv_info.contact.github}
+                text={"Github"}
+              />
+              <SocialIcon
+                icon={HiOutlineMail}
+                link={"mailto:" + cv_info.contact.email}
+                text={cv_info.contact.email}
+              />
+              <SocialIcon
+                icon={BiLogoLinkedinSquare}
+                link={cv_info.contact.linkedIn}
+                text={"LinkedIn"}
+              />
+            </VStack>
+          </InfoBox>
+
+          <InfoBox title={"Experience"}>
             {cv_info.experience.map((value, key) => (
               <Box>
                 <Flex justifyContent={"space-between"}>
@@ -182,7 +176,7 @@ const CV: React.FC<{}> = ({}) => {
             ))}
           </InfoBox>
 
-          <InfoBox w={"100%"} title={"Education"}>
+          <InfoBox title={"Education"}>
             {cv_info.education.map((value, key) => (
               <Box>
                 <Flex justifyContent={"space-between"}>
@@ -199,7 +193,7 @@ const CV: React.FC<{}> = ({}) => {
             ))}
           </InfoBox>
 
-          <InfoBox w={"100%"} title={"Skills"}>
+          <InfoBox title={"Skills"}>
             <Flex justifyContent={"space-between"}>
               <Flex>
                 {cv_info.skills.experienced.map((value, key) => (

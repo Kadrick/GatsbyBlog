@@ -24,7 +24,7 @@ const SocialIcon: React.FC<IconProps> = ({ icon, link }) => {
 const IndexPage: React.FC<PageProps> = () => {
   return (
     <Basic>
-      <VStack minH={"calc(100vh - 150px)"} justifyContent={"center"}>
+      <VStack w={"100vw"} minH={"calc(100vh - 150px)"} justifyContent={"center"}>
         <VStack h={"100px"} justifyContent={"space-around"}>
           <Heading as={"h2"}>가짜 개발자 이야기</Heading>
           <Text>
