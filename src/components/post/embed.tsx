@@ -11,6 +11,7 @@ import {
   Heading,
 } from "@chakra-ui/react";
 import { Spotify } from "react-spotify-embed";
+import axios from "axios";
 
 type MetaData = {
   title?: string;
@@ -55,8 +56,9 @@ const Embed: React.FC<EmbedProps> = ({ type, link }) => {
 
       const getMetaData = async () => {
         try {
-          const resp = await fetch(link);
-          const data = await resp.text();
+          const url = "https://corsproxy.io/?" + encodeURIComponent(link);
+          const resp = await axios({ method: "get", url: url });
+          const data = await resp.data;
 
           const parser = new DOMParser();
           const doc = parser.parseFromString(data, "text/html");
@@ -88,10 +90,7 @@ const Embed: React.FC<EmbedProps> = ({ type, link }) => {
             <Link href={link} target={"_blank"}>
               <Card direction={"row"} align={"center"}>
                 <CardBody w={"70%"} justifyContent={"center"}>
-                  <Heading
-                    size={"sm"}
-                    maxH={"80px"}
-                  >
+                  <Heading size={"sm"} maxH={"80px"}>
                     {metaData.title}
                   </Heading>
 
