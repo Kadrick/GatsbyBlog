@@ -15,6 +15,7 @@ import {
 
 import Math, { MathProps } from "./math";
 import Quote from "./quote";
+import Embed, { EmbedProps } from "./embed";
 
 /*=============================================*/
 
@@ -54,7 +55,7 @@ const MdxComponents = {
   ),
 
   hr: (props: HTMLProps<HTMLHRElement>) => (
-    <Divider pt={"2px"} pb={"2px"} borderColor={"gray"} />
+    <Divider mt={"15px"} mb={"15px"} borderColor={"gray"} />
   ),
 
   a: (props: HTMLProps<HTMLAnchorElement>) => (
@@ -84,6 +85,7 @@ const MdxComponents = {
     <Text as={"del"}>{props.children}</Text>
   ),
   Math: (props: HTMLProps<HTMLElement> & MathProps) => <Math {...props} />,
+  Embed: (props: HTMLProps<HTMLElement> & EmbedProps) => <Embed {...props} />,
 };
 
 export default MdxComponents;

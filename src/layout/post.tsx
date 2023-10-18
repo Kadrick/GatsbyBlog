@@ -55,13 +55,20 @@ const Post: React.FC<
       <Seo
         title={data.mdx.frontmatter.title || ""}
         url={
-          (data.site.siteMetadata.siteUrl || "") +
+          (data.site.siteMetadata.siteUrl || "") + "/post/" + 
           (data.mdx.frontmatter.slug || "")
         }
         description={data.mdx.frontmatter.description || ""}
       />
       <Container pt={"50px"}>
         <Heading>{data.mdx.frontmatter.title}</Heading>
+        {
+          data.mdx.frontmatter.description && (
+            <Text mt={"5px"} color={"gray"}>
+              {data.mdx.frontmatter.description}
+            </Text>
+          )
+        }
         {data.mdx.frontmatter.date && (
           <Heading mt={"40px"} size={"18px"} color={"gray"}>
             {month[new Date(data.mdx.frontmatter.date?.toString()).getMonth()]}{" "}
@@ -101,6 +108,8 @@ export const query = graphql`
       frontmatter {
         title
         tags
+        description
+        slug
         date(formatString: "YYYY-MM-DD")
       }
     }

@@ -2,6 +2,7 @@ import React from "react";
 
 import Basic from "./basic";
 import { Container, Heading, Text } from "@chakra-ui/react";
+import Seo from "./seo";
 
 type LayoutProps = {
   tabName: string;
@@ -12,6 +13,7 @@ type LayoutProps = {
 const Tab: React.FC<LayoutProps> = ({ tabName, description, children }) => {
   return (
     <Basic>
+      <Seo title={tabName} description={description} url={"/" + tabName.toLowerCase()}/>
       <Container pt={"50px"} centerContent>
         <Heading as={"h2"}>{tabName}</Heading>
         {description && <Text>{description}</Text>}
