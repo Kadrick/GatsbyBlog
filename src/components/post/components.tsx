@@ -59,7 +59,7 @@ const MdxComponents = {
   ),
 
   a: (props: HTMLProps<HTMLAnchorElement>) => (
-    <Link href={props.href} target={"_blank"} />
+    <Link href={props.href} target={"_blank"} color={"red"}>{props.children}</Link>
   ),
 
   blockquote: Quote,

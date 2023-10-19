@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import Header from "../components/common/header";
 import Footer from "../components/common/footer";
 
+import "./font.css";
+
 const variants = {
   hidden: { opacity: 0, x: 0, y: 20 },
   enter: { opacity: 1, x: 0, y: 0 },
@@ -27,7 +29,9 @@ const Basic: React.FC<LayoutProps> = ({ children }) => {
         variants={variants}
         transition={{ duration: 0.4, type: "easeInOut" }}
       >
-        <Container minH={"calc(100vh - 150px)"} centerContent>{children}</Container>
+        <Container minH={"calc(100vh - 150px)"} centerContent>
+          {children}
+        </Container>
       </motion.div>
       <Footer />
     </Box>
