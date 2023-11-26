@@ -82,15 +82,13 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
         {[...displayTarget.entries()].map((yearSet, key) => {
           if (yearSet[0] !== 0) {
             return (
-              <Box  mt={"70px"} key={key}>
+              <Box mt={"70px"} key={key}>
                 <Heading>{yearSet[0]}</Heading>
                 {yearSet[1].map((info, key) => (
                   <Box mt={"20px"} key={key}>
                     <Link to={"/post/" + info.slug}>
-                      <Flex ml={"15px"} justifyContent={"space-between"}>
-                        <Text size={"17px"}>
-                          {info.title}
-                        </Text>
+                      <Flex justifyContent={"space-between"}>
+                        <Text size={"17px"}>{info.title}</Text>
                         <Text>{info.date}</Text>
                       </Flex>
                     </Link>
@@ -107,7 +105,7 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
             {displayTarget.get(0)?.map((info, key) => (
               <Box mt={"20px"} key={key}>
                 <Link to={"/post/" + info.slug}>
-                  <Flex ml={"15px"}>
+                  <Flex>
                     <Text w={"500px"} size={"17px"}>
                       {info.title}
                     </Text>

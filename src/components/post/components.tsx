@@ -13,7 +13,6 @@ import {
 
 /*================== Custom UI =================*/
 
-import Math, { MathProps } from "./math";
 import Quote from "./quote";
 import Embed, { EmbedProps } from "./embed";
 
@@ -59,7 +58,9 @@ const MdxComponents = {
   ),
 
   a: (props: HTMLProps<HTMLAnchorElement>) => (
-    <Link href={props.href} target={"_blank"} color={"red"}>{props.children}</Link>
+    <Link href={props.href} target={"_blank"} color={"red"}>
+      {props.children}
+    </Link>
   ),
 
   blockquote: Quote,
@@ -84,7 +85,7 @@ const MdxComponents = {
   Delete: (props: HTMLProps<HTMLElement>) => (
     <Text as={"del"}>{props.children}</Text>
   ),
-  Math: (props: HTMLProps<HTMLElement> & MathProps) => <Math {...props} />,
+
   Embed: (props: HTMLProps<HTMLElement> & EmbedProps) => <Embed {...props} />,
 };
 

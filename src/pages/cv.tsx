@@ -153,7 +153,7 @@ const CV: React.FC<{}> = ({}) => {
 
           <InfoBox title={"Experience"}>
             {cv_info.experience.map((value, key) => (
-              <Box>
+              <Box key={key}>
                 <Flex justifyContent={"space-between"}>
                   <Flex>
                     <Heading size={"md"} mr={"3px"}>
@@ -178,7 +178,7 @@ const CV: React.FC<{}> = ({}) => {
 
           <InfoBox title={"Education"}>
             {cv_info.education.map((value, key) => (
-              <Box>
+              <Box key={key}>
                 <Flex justifyContent={"space-between"}>
                   <Heading size={"md"} mr={"3px"}>
                     {value.Affiliation}

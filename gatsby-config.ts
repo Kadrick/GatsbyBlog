@@ -30,7 +30,15 @@ const config: GatsbyConfig = {
       resolve: "gatsby-plugin-mdx",
       options: {
         extensions: [".mdx", ".md"],
-        gatsbyRemarkPlugins: ["gatsby-remark-images"],
+        gatsbyRemarkPlugins: [
+          "gatsby-remark-images",
+          {
+            resolve: "gatsby-remark-katex",
+            options: {
+              strict: "ignore",
+            },
+          },
+        ],
         mdxOptions: {
           remarkPlugins: [
             [
@@ -69,6 +77,12 @@ const config: GatsbyConfig = {
         path: "./src/posts/",
       },
       __key: "posts",
+    },
+    {
+      resolve: "gatsby-plugin-google-gtag",
+      options: {
+        trackingIds: ["G-PB8DY4KE86"],
+      },
     },
   ],
   flags: {
