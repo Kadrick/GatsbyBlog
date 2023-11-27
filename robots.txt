@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://kadrick.github.io/GatsbyBlog/sitemap-index.xml
+Host: https://kadrick.github.io
