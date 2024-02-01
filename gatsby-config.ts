@@ -84,6 +84,15 @@ const config: GatsbyConfig = {
         trackingIds: ["G-PB8DY4KE86"],
       },
     },
+    "gatsby-plugin-sitemap",
+    {
+      resolve: "gatsby-plugin-robots-txt",
+      options: {
+        host: "https://kadrick.github.io/GatsbyBlog/",
+        sitemap: "https://kadrick.github.io/GatsbyBlog/sitemap-index.xml",
+        policy: [{ userAgent: "*", allow: "/" }],
+      },
+    },
   ],
   flags: {
     DEV_SSR: true,
