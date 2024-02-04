@@ -15,6 +15,10 @@ const Seo = ({ title, description, url }: SeoProps) => {
       <meta property="og:url" content={url} />
       <meta property="og:description" content={description} />
       <meta name="description" content={description} />
+      <meta
+        name="google-site-verification"
+        content="4kzehFruQ9r8bMn9IElnTZRWWR4SaPsJSfdGwVhlYVI"
+      />
     </Helmet>
   );
 };

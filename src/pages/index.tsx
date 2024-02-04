@@ -7,6 +7,7 @@ import { IconType } from "react-icons";
 import { BiLogoLinkedinSquare } from "react-icons/bi";
 import { FiGithub } from "react-icons/fi";
 import { HiOutlineMail } from "react-icons/hi";
+import Seo from "../layout/seo";
 
 type IconProps = {
   icon: IconType;
@@ -24,7 +25,16 @@ const SocialIcon: React.FC<IconProps> = ({ icon, link }) => {
 const IndexPage: React.FC<PageProps> = () => {
   return (
     <Basic>
-      <VStack w={"100vw"} minH={"calc(100vh - 150px)"} justifyContent={"center"}>
+      <Seo
+        title={"가짜 개발자 이야기"}
+        description={"변방 개발자 블로그"}
+        url={"/"}
+      />
+      <VStack
+        w={"100vw"}
+        minH={"calc(100vh - 150px)"}
+        justifyContent={"center"}
+      >
         <VStack h={"100px"} justifyContent={"space-around"}>
           <Heading as={"h2"}>가짜 개발자 이야기</Heading>
           <Text>
