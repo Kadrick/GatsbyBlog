@@ -28,22 +28,22 @@ const MdxComponents = {
   p: (props: HTMLProps<HTMLParagraphElement>) => <Text>{props.children}</Text>,
 
   h2: (props: HTMLProps<HTMLHeadingElement>) => (
-    <Heading id={props.id} pt={"15px"} pb={"15px"} size={"xl"}>
+    <Heading id={props.id} pt={"20px"} pb={"20px"} size={"xl"}>
       {props.children}
     </Heading>
   ),
   h3: (props: HTMLProps<HTMLHeadingElement>) => (
-    <Heading id={props.id} pt={"10px"} pb={"10px"} size={"lg"}>
+    <Heading id={props.id} pt={"20px"} pb={"20px"} size={"lg"}>
       {props.children}
     </Heading>
   ),
   h4: (props: HTMLProps<HTMLHeadingElement>) => (
-    <Heading id={props.id} pt={"6px"} pb={"6px"} size={"md"}>
+    <Heading id={props.id} pt={"15px"} pb={"15px"} size={"md"}>
       {props.children}
     </Heading>
   ),
   h5: (props: HTMLProps<HTMLHeadingElement>) => (
-    <Heading id={props.id} pt={"2px"} pb={"2px"} size={"md"}>
+    <Heading id={props.id} pt={"10px"} pb={"10px"} size={"md"}>
       {props.children}
     </Heading>
   ),

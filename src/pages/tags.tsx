@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { PageProps, graphql } from "gatsby";
+import React, { useEffect, useState } from "react";
+import { Link, PageProps, graphql } from "gatsby";
 
 import Tab from "../layout/tab";
 
@@ -14,6 +14,7 @@ import {
   TagLabel,
   TagRightIcon,
   TagLeftIcon,
+  Divider,
 } from "@chakra-ui/react";
 import { HiHashtag } from "react-icons/hi";
 
@@ -32,37 +33,69 @@ type Post = {
 };
 
 const Tags: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
-  const tagMap = new Map<string, Post[]>();
+  const [tagMap, setTagMap] = useState<Map<string, Post[]>>(
+    new Map<string, Post[]>()
+  );
 
-  data.allMdx.edges.map((post, idx) => {
-    if ((post.node.frontmatter?.tags?.length || 0) > 0) {
-      for (const tag of post.node.frontmatter?.tags || []) {
-        if (tag === null) continue;
+  useEffect(() => {
+    const newMap = new Map<string, Post[]>();
 
-        if (!tagMap.has(tag)) {
-          tagMap.set(tag, []);
+    for (const post of data.allMdx.edges) {
+      const month = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      const dateString = post.node.frontmatter?.date as string;
+
+      let dateFormat = "";
+      if (dateString !== "") {
+        const postDate = new Date(dateString);
+        // prettier-ignore
+        dateFormat = `${month[postDate.getMonth()]} ${postDate.getDate().toString()}, ${postDate.getFullYear()}`;
+      }
+
+      if ((post.node.frontmatter?.tags?.length || 0) > 0) {
+        for (const tag of post.node.frontmatter?.tags || []) {
+          if (tag === null) continue;
+
+          if (!newMap.has(tag)) {
+            newMap.set(tag, []);
+          }
+
+          const arr = newMap.get(tag);
+          arr?.push({
+            title: post.node.frontmatter?.title || "",
+            slug: post.node.frontmatter?.slug || "",
+            date: dateFormat,
+          });
+        }
+      } else {
+        if (!newMap.has("No Tags")) {
+          newMap.set("No Tags", []);
         }
 
-        const arr = tagMap.get(tag);
+        const arr = newMap.get("No Tags");
         arr?.push({
           title: post.node.frontmatter?.title || "",
           slug: post.node.frontmatter?.slug || "",
-          date: post.node.frontmatter?.date || "",
+          date: dateFormat,
         });
       }
-    } else {
-      if (!tagMap.has("No Tags")) {
-        tagMap.set("No Tags", []);
-      }
-
-      const arr = tagMap.get("No Tags");
-      arr?.push({
-        title: post.node.frontmatter?.title || "",
-        slug: post.node.frontmatter?.slug || "",
-        date: post.node.frontmatter?.date || "",
-      });
     }
-  });
+
+    setTagMap(newMap);
+  }, []);
 
   const [selectedTag, setSelectedTag] = useState<string>("");
 
@@ -71,7 +104,7 @@ const Tags: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
       <Box mt={"70px"}>
         <Wrap>
           {[...tagMap.keys()].map((value, key) => (
-            <WrapItem key={"key"} onClick={() => setSelectedTag(value)}>
+            <WrapItem key={key} onClick={() => setSelectedTag(value)}>
               <Tag
                 size={"lg"}
                 key={key}
@@ -88,14 +121,18 @@ const Tags: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
           ))}
         </Wrap>
       </Box>
-      <Box>
-        {data.allMdx.edges
-          .filter((value) =>
-            value.node.frontmatter?.tags?.includes(selectedTag)
-          )
-          .map((post, idx) => (
-            <Box>{post.node.frontmatter?.title}</Box>
-          ))}
+      <Divider mt={"20px"} borderWidth={"2px"} borderColor={"red"} />
+      <Box w={"100%"}>
+        {tagMap.get(selectedTag)?.map((post, idx) => (
+          <Box mt={"20px"} key={idx}>
+            <Link to={"/post/" + post.slug}>
+              <Flex justifyContent={"space-between"}>
+                <Text size={"17px"}>{post.title}</Text>
+                <Text>{post.date}</Text>
+              </Flex>
+            </Link>
+          </Box>
+        ))}
       </Box>
     </Tab>
   );

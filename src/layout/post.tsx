@@ -12,6 +12,7 @@ import {
   Wrap,
   WrapItem,
   Tag,
+  Box,
 } from "@chakra-ui/react";
 import Seo from "./seo";
 
@@ -55,20 +56,19 @@ const Post: React.FC<
       <Seo
         title={data.mdx.frontmatter.title || ""}
         url={
-          (data.site.siteMetadata.siteUrl || "") + "/post/" + 
+          (data.site.siteMetadata.siteUrl || "") +
+          "/post/" +
           (data.mdx.frontmatter.slug || "")
         }
         description={data.mdx.frontmatter.description || ""}
       />
-      <Container pt={"50px"}>
+      <Box pt={"50px"} width={"80vw"}>
         <Heading>{data.mdx.frontmatter.title}</Heading>
-        {
-          data.mdx.frontmatter.description && (
-            <Text mt={"5px"} color={"gray"}>
-              {data.mdx.frontmatter.description}
-            </Text>
-          )
-        }
+        {data.mdx.frontmatter.description && (
+          <Text mt={"5px"} color={"gray"}>
+            {data.mdx.frontmatter.description}
+          </Text>
+        )}
         {data.mdx.frontmatter.date && (
           <Heading mt={"40px"} size={"18px"} color={"gray"}>
             {month[new Date(data.mdx.frontmatter.date?.toString()).getMonth()]}{" "}
@@ -86,10 +86,10 @@ const Post: React.FC<
             ))}
           </Wrap>
         )}
-      </Container>
-      <Container mt={"50px"}>
+      </Box>
+      <Box mt={"50px"} width={"80vw"}>
         <MDXProvider components={MdxComponents}>{children}</MDXProvider>
-      </Container>
+      </Box>
     </Basic>
   );
 };

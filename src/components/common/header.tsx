@@ -28,7 +28,7 @@ const Header: React.FC<{}> = () => {
     <Center w={"100vw"} h={"50px"}>
       <ButtonWithIcon icon={FiHome} text={"Home"} link={"/"} />
       <ButtonWithIcon icon={LuUser2} text={"CV"} link={"/cv"} />
-      <ButtonWithIcon icon={FiCode} text={"Works"} link={"/"} />
+      <ButtonWithIcon icon={FiCode} text={"Works"} link={"/works"} />
       <ButtonWithIcon icon={FiBook} text={"Archive"} link={"/archive"} />
       <ButtonWithIcon icon={FiTag} text={"Tags"} link={"/tags"} />
     </Center>
