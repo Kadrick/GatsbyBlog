@@ -1,0 +1,1 @@
+gh-pages -d public -m "$(date)"

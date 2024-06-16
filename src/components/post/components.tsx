@@ -58,7 +58,12 @@ const MdxComponents = {
   ),
 
   a: (props: HTMLProps<HTMLAnchorElement>) => (
-    <Link href={props.href} target={"_blank"} color={"red"}>
+    <Link
+      href={props.href}
+      target={"_blank"}
+      color={"red"}
+      textDecorationLine={"underline"}
+    >
       {props.children}
     </Link>
   ),

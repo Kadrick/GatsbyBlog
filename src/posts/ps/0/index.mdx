@@ -1,0 +1,1026 @@
+---
+title: "PS Note #0"
+tags:
+  - Problem Solving
+date: 2024-06-16
+description: 한국정보올림피아드 시.도 지역본선 2004
+slug: ps/0
+---
+
+import {
+  Table,
+  TableCaption,
+  TableContainer,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+} from "@chakra-ui/react";
+
+## 문제집
+
+한국정보올림피아드 시.도 지역본선 2004 - [https://www.acmicpc.net/category/74](https://www.acmicpc.net/category/74)
+
+### 초등부
+
+---
+
+#### 1. 일곱 난쟁이 - 2309
+
+9개의 수를 모두 더하고, 2개씩 빼서 정답을 찾았다.
+
+#### 2. 줄 세우기 - 2605
+
+그냥 지정된 위치에 잘 넣으면 된다.
+
+#### 3. 바이러스 - 2606
+
+그래프 탐색 중 방문하는 노드의 개수를 세보자.
+
+#### 4. 비슷한 단어 - 2607
+
+두 문자열의 구성을 비교해서 서로 다른 구성이 2개 이하면 비슷하다고 판단했다.
+
+#### 5. 로마 숫자 - 2608
+
+구현을 잘하자.
+
+<CH.Code>
+
+```cpp 2309.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+int arr[9], sum, flag;
+
+void print(int no1, int no2) {
+  for (int i = 0; i < 9; ++i) {
+    if(i == no1 || no2 == i) continue;
+    cout << arr[i] << endl;
+  }
+}
+
+int main(void) {
+  fastio;
+
+  for (int i = 0; i < 9; ++i) {
+    cin >> arr[i];
+    sum += arr[i];
+  }
+
+  sort(arr, arr + 9);
+
+  for (int i = 0;  i < 9; ++i) {
+    sum -= arr[i];
+    for (int j = 0; j < 9; ++j) {
+      if(i != j && sum - arr[j] == 100) {
+        flag = 1;
+        print(i, j);
+      }
+    }
+    if(flag) break;
+    sum += arr[i];
+  }
+
+  return 0;
+}
+```
+
+```go 2605.go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+)
+
+const (
+	debug       = true
+	inf   int64 = math.MaxInt64
+)
+
+/*========================================================================*/
+/* I/O */
+
+var (
+	// scanner = bufio.NewScanner(os.Stdin)
+	// outF, _ = os.OpenFile("out.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	// print   = bufio.NewWriter(outF)
+
+	scanner = bufio.NewScanner(os.Stdin)
+	print   = bufio.NewWriter(os.Stdout)
+)
+
+func nextInt() int64 {
+	scanner.Scan()
+	text := scanner.Text()
+	v, _ := strconv.ParseInt(text, 10, 64)
+	return v
+}
+
+func nextString() string {
+	scanner.Scan()
+	text := scanner.Text()
+	return text
+}
+
+/*========================================================================*/
+
+func min(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func main() {
+	scanner.Split(bufio.ScanWords)
+	defer print.Flush()
+
+	n := nextInt()
+
+	arr := make([]int64, n)
+	for i := 0; i < int(n); i++ {
+		arr[i] = nextInt()
+	}
+
+	ans := []int64{1}
+	for i := 1; i < int(n); i++ {
+		if arr[i] == int64(len(ans)) {
+			ans = append([]int64{int64(i + 1)}, ans...)
+		} else if arr[i] == 0 {
+			ans = append(ans, int64(i+1))
+		} else {
+			pivot := len(ans) - int(arr[i])
+			ans = append(ans[:pivot], append([]int64{int64(i + 1)}, ans[pivot:]...)...)
+		}
+	}
+
+	for i := 0; i < int(n); i++ {
+		fmt.Fprintf(print, "%d ", ans[i])
+	}
+
+}
+```
+
+```cpp 2606.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+int nTotalComputer;
+int nEdge;
+int ans;
+bool adjTable[101][101];
+bool isVisited[101];
+
+void dfs(int computer) {
+  ans++;
+  isVisited[computer] = true;
+  for (int i = 1; i <= nTotalComputer; ++i) {
+    if (adjTable[computer][i] && !isVisited[i]) {
+      dfs(i);
+    }
+  }
+}
+
+int main(void) {
+  fastio;
+
+  cin >> nTotalComputer;
+  cin >> nEdge;
+
+  for (int i = 0; i < nEdge; ++i) {
+    int u, v;
+    cin >> u >> v;
+    adjTable[u][v] = true;
+    adjTable[v][u] = true;
+  }
+
+  dfs(1);
+
+  cout << ans - 1 << endl;
+
+  return 0;
+}
+```
+
+```go 2607.go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+)
+
+const (
+	debug       = true
+	inf   int64 = math.MaxInt64
+)
+
+/*========================================================================*/
+/* I/O */
+
+var (
+	// scanner = bufio.NewScanner(os.Stdin)
+	// outF, _ = os.OpenFile("out.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	// print   = bufio.NewWriter(outF)
+
+	scanner = bufio.NewScanner(os.Stdin)
+	print   = bufio.NewWriter(os.Stdout)
+)
+
+func nextInt() int64 {
+	scanner.Scan()
+	text := scanner.Text()
+	v, _ := strconv.ParseInt(text, 10, 64)
+	return v
+}
+
+func nextString() string {
+	scanner.Scan()
+	text := scanner.Text()
+	return text
+}
+
+/*========================================================================*/
+
+func min(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func main() {
+	scanner.Split(bufio.ScanWords)
+	defer print.Flush()
+
+	n, str := nextInt(), nextString()
+
+	ans := 0
+
+	standard := make([]int, 26)
+	for i := 0; i < len(str); i++ {
+		standard[byte(str[i])-byte('A')]++
+	}
+
+	for i := 0; i < int(n-1); i++ {
+
+		target := nextString()
+
+		if int(math.Abs(float64(len(target)-len(str)))) >= 2 {
+			continue
+		}
+
+		compare := make([]int, 26)
+		for i := 0; i < len(target); i++ {
+			compare[byte(target[i])-byte('A')]++
+		}
+
+		anomaly := 0
+
+		for j := 0; j < 26; j++ {
+			if standard[j] != compare[j] {
+				anomaly += int(math.Abs(float64(standard[j] - compare[j])))
+			}
+		}
+
+		if anomaly <= 2 {
+			ans++
+		}
+
+	}
+
+	fmt.Fprintf(print, "%d\n", ans)
+
+}
+```
+
+```go 2608.go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+)
+
+const (
+	debug       = true
+	inf   int64 = math.MaxInt64
+)
+
+/*========================================================================*/
+/* I/O */
+
+var (
+	// scanner = bufio.NewScanner(os.Stdin)
+	// outF, _ = os.OpenFile("out.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	// print   = bufio.NewWriter(outF)
+
+	scanner = bufio.NewScanner(os.Stdin)
+	print   = bufio.NewWriter(os.Stdout)
+)
+
+func nextInt() int64 {
+	scanner.Scan()
+	text := scanner.Text()
+	v, _ := strconv.ParseInt(text, 10, 64)
+	return v
+}
+
+func nextString() string {
+	scanner.Scan()
+	text := scanner.Text()
+	return text
+}
+
+/*========================================================================*/
+
+func min(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func charToInt(t byte) int {
+	switch t {
+	case byte('I'):
+		return 1
+	case byte('V'):
+		return 5
+	case byte('X'):
+		return 10
+	case byte('L'):
+		return 50
+	case byte('C'):
+		return 100
+	case byte('D'):
+		return 500
+	case byte('M'):
+		return 1000
+	}
+	return -1
+}
+
+func intToChar(t int) string {
+	switch t {
+	case 1000:
+		return "M"
+	case 900:
+		return "CM"
+	case 500:
+		return "D"
+	case 400:
+		return "CD"
+	case 100:
+		return "C"
+	case 90:
+		return "XC"
+	case 50:
+		return "L"
+	case 40:
+		return "XL"
+	case 10:
+		return "X"
+	case 9:
+		return "IX"
+	case 5:
+		return "V"
+	case 4:
+		return "IV"
+	case 1:
+		return "I"
+	}
+	return ""
+}
+
+func main() {
+	scanner.Split(bufio.ScanWords)
+	defer print.Flush()
+
+	a, b := []byte(nextString()), []byte(nextString())
+	aVal, bVal := 0, 0
+
+	for i := 0; i < len(a); i++ {
+		if i != len(a)-1 && charToInt(a[i]) < charToInt(a[i+1]) {
+			aVal += charToInt(a[i+1]) - charToInt(a[i])
+			i++
+		} else {
+			aVal += charToInt(a[i])
+		}
+	}
+
+	for i := 0; i < len(b); i++ {
+		if i != len(b)-1 && charToInt(b[i]) < charToInt(b[i+1]) {
+			bVal += charToInt(b[i+1]) - charToInt(b[i])
+			i++
+		} else {
+			bVal += charToInt(b[i])
+		}
+	}
+
+	ans := aVal + bVal
+	fmt.Fprintf(print, "%d\n", ans)
+
+	digit := []int{ans / 1000,
+		(ans % 1000) / 100,
+		(ans % 100) / 10,
+		ans % 10,
+	}
+
+	ansStr := ""
+
+	for i := 0; i < 4; i++ {
+		if digit[i] == 4 || digit[i] == 9 {
+			ansStr += intToChar(digit[i] * int(math.Pow10(3-i)))
+			continue
+		} else if digit[i] >= 5 {
+			ansStr += intToChar(5 * int(math.Pow10(3-i)))
+			digit[i] -= 5
+		}
+
+		for j := 0; j < digit[i]; j++ {
+			ansStr += intToChar(int(math.Pow10(3 - i)))
+		}
+	}
+
+	fmt.Fprintf(print, "%s\n", ansStr)
+
+}
+```
+
+</CH.Code>
+
+### 중등부
+
+---
+
+#### 1. 최대공약수와 최소공배수 - 2609
+
+GCD 구하기
+
+#### 2. 비슷한 단어 - 2607
+
+초등부 4번과 동일
+
+#### 3. 회의준비 - 2610
+
+1. 분리 집합으로 팀을 나눈다.
+2. 각 정점에서 다른 정점으로의 거리를 계산한다. (100명 이하니까 $n^3$이 가능하다.)
+3. 팀에서 다른 팀원까지의 거리의 최댓값이 최소가 되는 대표를 정한다.
+4. 선출된 대표를 정렬한다.
+
+#### 4. 자동차 경주 - 2611
+
+DAG에서 최대거리를 구하자. -> 위상정렬
+
+정렬이 이루어질 때, 거리가 최대가 되는 간선을 저장하자. 그리고, 역추적도 필요하다.
+
+#### 5. DNA 유사도 - 2612
+
+문제에서 공백을 적절히 넣는 행위는 `s1` 문자열에서 편집(교체, 삽입, 삭제)를 통해서 `s2`를 만드는 것이라고 생각할 수 있다.
+다음 표를 확인해보자.
+
+<TableContainer>
+  <Table variant="simple">
+    <TableCaption>*은 공백이다.</TableCaption>
+    <Thead>
+      <Tr>
+        <Th>identifier</Th>
+        <Th>string</Th>
+        <Th>act</Th>
+      </Tr>
+    </Thead>
+    <Tbody>
+      <Tr>
+        <Td>s1</Td>
+        <Td>A T * => AT</Td>
+        <Td rowspan="2">교체</Td>
+      </Tr>
+      <Tr>
+        <Td>s2</Td>
+        <Td>A * G => AG</Td>
+      </Tr>
+      <Tr>
+        <Td>s1</Td>
+        <Td>A G * => AG</Td>
+        <Td rowspan="2">삽입</Td>
+      </Tr>
+      <Tr>
+        <Td>s2</Td>
+        <Td>A G T => AGT</Td>
+      </Tr>
+      <Tr>
+        <Td>s1</Td>
+        <Td>A G T => AGT</Td>
+        <Td rowspan="2">삭제</Td>
+      </Tr>
+      <Tr>
+        <Td>s2</Td>
+        <Td>A G * => AG</Td>
+      </Tr>
+    </Tbody>
+  </Table>
+</TableContainer>
+
+이걸 생각하고 문제를 보면, [편집 거리 구하기](https://en.wikipedia.org/wiki/Edit_distance) + 역추적 문제임을 알 수 있다.
+
+<CH.Code>
+
+```cpp 2609.cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#define endl    '\n'
+#define FastIO ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+
+using namespace std;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef tuple<int, int, int> tiii;
+
+int g;
+
+int gcd(int a, int b)
+{
+	if (b == 0)
+		return a;
+	else
+		return gcd(b, a % b);
+}
+
+int main(void)
+{
+	FastIO;
+
+	int a, b;
+	cin >> a >> b;
+
+	g = gcd(a, b);
+	cout << g << endl;
+	cout << a * b / g << endl;
+
+	return 0;
+}
+```
+
+```go 2610.go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"sort"
+	"strconv"
+)
+
+const (
+	debug       = true
+	inf   int64 = math.MaxInt64
+)
+
+/*========================================================================*/
+/* I/O */
+
+var (
+	// scanner = bufio.NewScanner(os.Stdin)
+	// outF, _ = os.OpenFile("out.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	// print   = bufio.NewWriter(outF)
+
+	scanner = bufio.NewScanner(os.Stdin)
+	print   = bufio.NewWriter(os.Stdout)
+)
+
+func nextInt() int64 {
+	scanner.Scan()
+	text := scanner.Text()
+	v, _ := strconv.ParseInt(text, 10, 64)
+	return v
+}
+
+func nextString() string {
+	scanner.Scan()
+	text := scanner.Text()
+	return text
+}
+
+/*========================================================================*/
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func find(arr []int, x int) int {
+	if arr[x] == x {
+		return x
+	}
+	arr[x] = find(arr, arr[x])
+	return arr[x]
+}
+
+func merge(arr []int, u, v int) {
+	u = find(arr, u)
+	v = find(arr, v)
+
+	if u != v {
+		arr[max(u, v)] = min(u, v)
+	}
+}
+
+func main() {
+	scanner.Split(bufio.ScanWords)
+	defer print.Flush()
+
+	n, m := nextInt(), nextInt()
+
+	set := []int{0}
+	for i := 0; i < int(n); i++ {
+		set = append(set, i+1)
+	}
+
+	dist := make([][]int, n+1)
+	for i := 0; i <= int(n); i++ {
+		for j := 0; j <= int(n); j++ {
+			if i == j {
+				dist[i] = append(dist[i], 0)
+			} else {
+				dist[i] = append(dist[i], math.MaxInt32)
+			}
+		}
+	}
+
+	for i := 0; i < int(m); i++ {
+		u, v := nextInt(), nextInt()
+		merge(set, int(u), int(v))
+		dist[u][v] = 1
+		dist[v][u] = 1
+	}
+
+	for k := 1; k <= int(n); k++ {
+		for i := 1; i <= int(n); i++ {
+			for j := 1; j <= int(n); j++ {
+				dist[i][j] = min(dist[i][j], dist[i][k]+dist[k][j])
+			}
+		}
+	}
+
+	teams := map[int][]int{}
+
+	for i := 0; i < int(n); i++ {
+		find(set, i+1)
+		team, ok := teams[set[i+1]]
+		if !ok {
+			teams[set[i+1]] = make([]int, 0)
+			team = teams[set[i+1]]
+		}
+		team = append(team, i+1)
+		teams[set[i+1]] = team
+	}
+
+	fmt.Fprintf(print, "%d\n", len(teams))
+
+	ansMem := []int{}
+	for _, team := range teams {
+
+		leader := math.MaxInt32
+		leaderVal := math.MaxInt32
+
+		for _, member := range team {
+
+			factor := 0
+			for i := 0; i < int(n); i++ {
+				if dist[member][i+1] != math.MaxInt32 {
+					factor = max(factor, dist[member][i+1])
+				}
+			}
+
+			if factor < leaderVal {
+				leader = member
+				leaderVal = factor
+			}
+
+		}
+
+		ansMem = append(ansMem, leader)
+
+	}
+
+	sort.Slice(ansMem, func(i, j int) bool {
+		return ansMem[i] < ansMem[j]
+	})
+
+	for _, member := range ansMem {
+		fmt.Fprintf(print, "%d\n", member)
+	}
+}
+
+```
+
+```cpp 2611.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+int main(void) {
+  fastio;
+
+  int n, m;
+  cin >> n >> m;
+
+  vector<pair<int, int>> dist(n + 1, {-1, -1});
+  vector<int> inDeg(n + 1, 0);
+  vector<vector<pair<int, int>>> graph(n + 1, vector<pair<int, int>>(0));
+
+  for (int i = 0; i < m; i++) {
+    int p, q, r;
+    cin >> p >> q >> r;
+    graph[p].push_back({(q == 1 ? 0 : q), r});
+    inDeg[(q == 1 ? 0 : q)]++;
+  }
+
+  dist[1] = {0, -1};
+  queue<pair<int, int>> q;
+  q.push({1, 0});
+
+  while (!q.empty()) {
+    auto [cur, total] = q.front();
+    q.pop();
+
+    for (auto [next, cost] : graph[cur]) {
+      inDeg[next]--;
+
+      if (dist[next].first < total + cost) {
+        dist[next] = {total + cost, cur};
+      }
+
+      if (!inDeg[next]) {
+        q.push({next, dist[next].first});
+      }
+    }
+  }
+
+  cout << dist[0].first << endl;
+
+  vector<int> route;
+
+  int cur = 0;
+  while (cur != 1) {
+    route.push_back(dist[cur].second);
+    cur = dist[cur].second;
+  }
+
+  for (int i = route.size() - 1; i >= 0; i--) {
+    cout << route[i] << ' ';
+  }
+  cout << 1 << endl;
+
+  return 0;
+}
+```
+
+```cpp 2612.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+enum Type { SAME, INSERT, DELETE, REPLACE };
+
+int main(void) {
+  fastio;
+
+  int len1, len2;
+  string s1, s2;
+  cin >> len1 >> s1 >> len2 >> s2;
+
+  vector<vector<pair<int, int>>> usado(
+      len1 + 1, vector<pair<int, int>>(len2 + 1, {0, -1}));
+
+  for (int i = 1; i <= len1; i++) {
+    usado[i][0].first = usado[i - 1][0].first - 2;
+  }
+
+  for (int i = 1; i <= len2; i++) {
+    usado[0][i].first = usado[0][i - 1].first - 2;
+  }
+
+  pair<int, pair<int, int>> top = {INT_MIN, {0, 0}};
+
+  for (int i = 1; i <= len1; i++) {   // s1
+    for (int j = 1; j <= len2; j++) { // s2
+
+      if (s1[i - 1] == s2[j - 1]) {
+        usado[i][j] = {max(0, usado[i - 1][j - 1].first) + 3, SAME};
+      } else {
+        int val = max({
+            usado[i - 1][j].first - 2,
+            usado[i][j - 1].first - 2,
+            usado[i - 1][j - 1].first - 2,
+        });
+
+        if (val == usado[i - 1][j].first - 2) {
+          usado[i][j] = {val, DELETE};
+        } else if (val == usado[i][j - 1].first - 2) {
+          usado[i][j] = {val, INSERT};
+        } else if (val == usado[i - 1][j - 1].first - 2) {
+          usado[i][j] = {val, REPLACE};
+        }
+      }
+
+      if (top.first < usado[i][j].first && usado[i][j].second == SAME) {
+        top = {usado[i][j].first, {i, j}};
+      }
+    }
+  }
+
+  pair<int, pair<int, int>> cur = top;
+  vector<pair<int, int>> trace;
+  trace.push_back({0, 0});
+
+  do {
+
+    auto [val, pos] = cur;
+    auto [y, x] = pos;
+
+    switch (usado[y][x].second) {
+    case SAME:
+      trace.push_back({-1, -1});
+      cur = {usado[y - 1][x - 1].first, {y - 1, x - 1}};
+      break;
+    case INSERT:
+      trace.push_back({0, -1});
+      cur = {usado[y][x - 1].first, {y, x - 1}};
+      break;
+    case DELETE:
+      trace.push_back({-1, 0});
+      cur = {usado[y - 1][x].first, {y - 1, x}};
+      break;
+    case REPLACE:
+      trace.push_back({-1, -1});
+      cur = {usado[y - 1][x - 1].first, {y - 1, x - 1}};
+      break;
+    }
+  } while (cur.first > 0 &&
+           usado[cur.second.first][cur.second.second].second != -1);
+
+  cout << top.first << endl;
+
+  string ans1 = "", ans2 = "";
+  pair<int, int> pos = top.second;
+  for (auto [dy, dx] : trace) {
+    if (dy != 0) {
+      ans1 = s1[pos.first - 1] + ans1;
+      pos.first += dy;
+    }
+    if (dx != 0) {
+      ans2 = s2[pos.second - 1] + ans2;
+      pos.second += dx;
+    }
+  }
+
+  cout << ans1 << endl << ans2 << endl;
+
+  return 0;
+}
+```
+
+</CH.Code>
+
+### 고등부
+
+---
+
+#### 1. 최대공약수와 최소공배수 - 2609
+
+중등부 1번
+
+#### 2. 로마 숫자 - 2608
+
+초등부 5번
+
+#### 2. 회의 준비 - 2610
+
+중등부 3번
+
+#### 4. 숫자구슬 - 2613
+
+모든 1~n 번까지의 누적합을 미리 구하고, 구간을 잘라보자. $dp[현재 그룹 번호][시작 구슬 번호]$
+
+#### 5. 청개구리 - 2614
+
+뭔가 개구리 뛰는걸로 방정식 세워서? 계수 장난하는 것 같은데, 식 세우기를 못하겠다.
+
+<Delete>(진짜 어케 푸는거임? 정답률도 곱창 났던데...)</Delete>
+
+<CH.Code>
+
+```cpp 2613.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+// [start, end]
+int get(vector<int> &sum, int start, int end) {
+  return sum[end] - sum[start - 1];
+}
+
+int solve(vector<vector<int>> &trace, vector<vector<int>> &cache,
+          vector<int> &sum, int cur, int offset, int mxGroup) {
+
+  if (cache[cur][offset] != -1) {
+    return cache[cur][offset];
+  }
+
+  if (cur == mxGroup) {
+    trace[cur][offset] = sum.size() - 1;
+    cache[cur][offset] = get(sum, offset, sum.size() - 1);
+    return cache[cur][offset];
+  }
+
+  int ret = INT32_MAX;
+
+  int end = sum.size() - 1 - (mxGroup - cur);
+
+  for (int i = offset; i <= end; i++) {
+
+    int chk = max(get(sum, offset, i),
+                  solve(trace, cache, sum, cur + 1, i + 1, mxGroup));
+
+    if (ret > chk) {
+      trace[cur][offset] = i;
+      ret = chk;
+    }
+  }
+
+  cache[cur][offset] = ret;
+  return ret;
+}
+
+int main(void) {
+  fastio;
+
+  int n, m;
+  cin >> n >> m;
+
+  vector<int> arr(n + 1, 0), sum(n + 1, 0);
+  for (int i = 0; i < n; i++) {
+    cin >> arr[i + 1];
+    sum[i + 1] = arr[i + 1] + sum[i];
+  }
+
+  vector<vector<int>> cache(m + 1, vector<int>(n + 1, -1));
+  vector<vector<int>> trace(m + 1, vector<int>(n + 1, 0));
+
+  cout << solve(trace, cache, sum, 1, 1, m) << endl;
+
+  int offset = 1, before = 0;
+  for (int i = 0; i < m; i++) {
+    cout << trace[i + 1][offset] - before << ' ';
+    before = trace[i + 1][offset];
+    offset = trace[i + 1][offset] + 1;
+  }
+
+  return 0;
+}
+```
+
+</CH.Code>
