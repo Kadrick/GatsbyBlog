@@ -17,7 +17,10 @@ const config: GatsbyConfig = {
   plugins: [
     "@chakra-ui/gatsby-plugin",
     "gatsby-plugin-styled-components",
-    "gatsby-plugin-image",
+    {
+      resolve: "gatsby-plugin-image",
+      options: { placeholder: "none" },
+    },
     "gatsby-plugin-sitemap",
     "gatsby-plugin-react-helmet",
     {
