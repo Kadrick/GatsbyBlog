@@ -4,6 +4,7 @@ import { Link, PageProps, graphql } from "gatsby";
 
 import { Box, Container, Flex, Heading, Text } from "@chakra-ui/react";
 import Tab from "../layout/tab";
+import { FormatDate } from "../util/format";
 
 type AllMDXQuery = {
   allMdx: {
@@ -48,22 +49,7 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
       displayTarget.set(postDate.getFullYear(), []);
     }
 
-    const month = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    // prettier-ignore
-    const dateFormat = `${month[postDate.getMonth()]} ${postDate.getDate().toString()}, ${postDate.getFullYear()}`;
+    const dateFormat = FormatDate(postDate);
 
     const prevData = displayTarget.get(postDate.getFullYear());
     prevData?.push({
@@ -124,7 +110,12 @@ export default Archive;
 
 export const query = graphql`
   {
-    allMdx(sort: { frontmatter: { date: DESC } }) {
+    allMdx(
+      sort: { frontmatter: { date: DESC } }
+      filter: {
+        frontmatter: { draft: { ne: true }, tags: { nin: ["Weekly"] } }
+      }
+    ) {
       edges {
         node {
           frontmatter {

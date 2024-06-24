@@ -63,7 +63,7 @@ const InfoBox: React.FC<InfoBoxProps & ChakraProps> = ({
   );
 };
 
-const cv_info = {
+const CVInfo = {
   title: {
     name: "강보권",
     description: "INTP-A / I - 95% / N - 54% / T - 88% /  P - 51% / A - 54%",
@@ -113,12 +113,12 @@ const cv_info = {
 
 const CV: React.FC<{}> = ({}) => {
   return (
-    <Tab tabName={cv_info.title.name} description={cv_info.title.description}>
+    <Tab tabName={CVInfo.title.name} description={CVInfo.title.description}>
       <Container mt={"70px"}>
         <VStack spacing={"70px"}>
           <InfoBox title={"About..."}>
             <VStack alignItems={"start"}>
-              {cv_info.aboutMe.description.map((content, key) => (
+              {CVInfo.aboutMe.description.map((content, key) => (
                 <Text textAlign={"left"} key={key}>
                   {content}
                 </Text>
@@ -131,28 +131,28 @@ const CV: React.FC<{}> = ({}) => {
               <SocialIcon
                 icon={FaLocationPin}
                 link={""}
-                text={cv_info.contact.address}
+                text={CVInfo.contact.address}
               />
               <SocialIcon
                 icon={FiGithub}
-                link={cv_info.contact.github}
+                link={CVInfo.contact.github}
                 text={"Github"}
               />
               <SocialIcon
                 icon={HiOutlineMail}
-                link={"mailto:" + cv_info.contact.email}
-                text={cv_info.contact.email}
+                link={"mailto:" + CVInfo.contact.email}
+                text={CVInfo.contact.email}
               />
               <SocialIcon
                 icon={BiLogoLinkedinSquare}
-                link={cv_info.contact.linkedIn}
+                link={CVInfo.contact.linkedIn}
                 text={"LinkedIn"}
               />
             </VStack>
           </InfoBox>
 
           <InfoBox title={"Experience"}>
-            {cv_info.experience.map((value, key) => (
+            {CVInfo.experience.map((value, key) => (
               <Box key={key}>
                 <Flex justifyContent={"space-between"}>
                   <Flex>
@@ -177,7 +177,7 @@ const CV: React.FC<{}> = ({}) => {
           </InfoBox>
 
           <InfoBox title={"Education"}>
-            {cv_info.education.map((value, key) => (
+            {CVInfo.education.map((value, key) => (
               <Box key={key}>
                 <Flex justifyContent={"space-between"}>
                   <Heading size={"md"} mr={"3px"}>
@@ -196,7 +196,7 @@ const CV: React.FC<{}> = ({}) => {
           <InfoBox title={"Skills"}>
             <Flex justifyContent={"space-between"}>
               <Flex>
-                {cv_info.skills.experienced.map((value, key) => (
+                {CVInfo.skills.experienced.map((value, key) => (
                   <Text mr={"10px"} key={key}>
                     {value}
                   </Text>
@@ -206,7 +206,7 @@ const CV: React.FC<{}> = ({}) => {
             </Flex>
             <Flex justifyContent={"space-between"}>
               <Flex>
-                {cv_info.skills.intermediate.map((value, key) => (
+                {CVInfo.skills.intermediate.map((value, key) => (
                   <Text mr={"10px"} key={key}>
                     {value}
                   </Text>

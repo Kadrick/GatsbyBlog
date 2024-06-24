@@ -17,6 +17,7 @@ import {
   Divider,
 } from "@chakra-ui/react";
 import { HiHashtag } from "react-icons/hi";
+import { FormatDate } from "../util/format";
 
 type AllMDXQuery = {
   allMdx: {
@@ -41,28 +42,13 @@ const Tags: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
     const newMap = new Map<string, Post[]>();
 
     for (const post of data.allMdx.edges) {
-      const month = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-
       const dateString = post.node.frontmatter?.date as string;
 
       let dateFormat = "";
       if (dateString !== "") {
         const postDate = new Date(dateString);
         // prettier-ignore
-        dateFormat = `${month[postDate.getMonth()]} ${postDate.getDate().toString()}, ${postDate.getFullYear()}`;
+        dateFormat = FormatDate(postDate);
       }
 
       if ((post.node.frontmatter?.tags?.length || 0) > 0) {
