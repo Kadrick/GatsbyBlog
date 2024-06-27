@@ -34,7 +34,12 @@ const config: GatsbyConfig = {
       options: {
         extensions: [".mdx", ".md"],
         gatsbyRemarkPlugins: [
-          "gatsby-remark-images",
+          {
+            resolve: "gatsby-remark-images",
+            options: {
+              backgroundColor: "none",
+            },
+          },
           {
             resolve: "gatsby-remark-katex",
             options: {
