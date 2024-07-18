@@ -33,7 +33,7 @@ const Items: WorkItem[] = [
   },
   {
     id: 2,
-    slug: "/work/computer",
+    slug: "/work/errors",
     cover: "works/error.png",
     title: "Error 정리함",
     description: "아무튼 돌아가니 좋았쓰!",
