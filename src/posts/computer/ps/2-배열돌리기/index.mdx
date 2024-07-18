@@ -1,0 +1,975 @@
+---
+title: "PS Note #2 - 배열 돌리기"
+tags:
+  - Problem Solving
+date: 2024-07-18
+description: 빙글빙글 돌아가는 참피의 하루
+slug: computer/ps/2
+---
+
+## 문제집
+
+배열 돌리기 - [https://www.acmicpc.net/workbook/view/6515](https://www.acmicpc.net/workbook/view/6515)
+
+--- 
+
+#### 배열 돌리기 1 / 2 - 16926, 16927
+
+껍데기부터 한줄로 뽑아내자.
+
+<CH.Code>
+```cpp 16927.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+void extract(const vector<vector<int>> &arr, int h, int w, int r, int c,
+             vector<int> &ret) {
+
+  for (int i = c; i < c + w; i++) {
+    ret.push_back(arr[r][i]);
+  }
+
+  for (int i = r + 1; i < r + h; i++) {
+    ret.push_back(arr[i][c + w - 1]);
+  }
+
+  for (int i = c + w - 2; i >= c; i--) {
+    ret.push_back(arr[r + h - 1][i]);
+  }
+
+  for (int i = r + h - 2; i > r; i--) {
+    ret.push_back(arr[i][c]);
+  }
+
+  return;
+}
+
+void load(vector<vector<int>> &arr, int h, int w, int r, int c, int offset,
+          vector<int> &data) {
+
+  int idx = offset;
+  for (int i = c; i < c + w; i++) {
+    arr[r][i] = data[idx];
+    idx = (idx + 1) % data.size();
+  }
+
+  for (int i = r + 1; i < r + h; i++) {
+    arr[i][c + w - 1] = data[idx];
+    idx = (idx + 1) % data.size();
+  }
+
+  for (int i = c + w - 2; i >= c; i--) {
+    arr[r + h - 1][i] = data[idx];
+    idx = (idx + 1) % data.size();
+  }
+
+  for (int i = r + h - 2; i > r; i--) {
+    arr[i][c] = data[idx];
+    idx = (idx + 1) % data.size();
+  }
+
+  return;
+}
+
+int main(void) {
+  fastio;
+
+  int n, m, r;
+  cin >> n >> m >> r;
+
+  vector<vector<int>> arr(n, vector<int>(m, 0));
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      cin >> arr[i][j];
+    }
+  }
+
+  int l = 0, t = 0, h = n, w = m;
+  while (h > 0 && w > 0) {
+
+    vector<int> data;
+    extract(arr, h, w, t, l, data);
+    load(arr, h, w, t, l, r % data.size(), data);
+
+    l += 1, t += 1;
+    h -= 2, w -= 2;
+  }
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      cout << arr[i][j] << ' ';
+    }
+    cout << endl;
+  }
+
+  return 0;
+}
+```
+</CH.Code>
+
+---
+
+#### 배열 돌리기 4 - 17406
+
+**회전 연산을 모두 사용해야하고, 순서는 임의로 정해도 된다.** -> 순열을 뽑아내자.
+
+뽑아낸 순열대로 회전하고 값을 구하면 된다.
+
+<Delete>회전 시키는거 잘 구현하자.</Delete>
+
+<CH.Code>
+```cpp 17406.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+void print(const vector<vector<int>> &arr) {
+  cout << endl << "--------------------" << endl;
+  for (int i = 0; i < arr.size(); i++) {
+    for (int j = 0; j < arr[i].size(); j++) {
+      cout << arr[i][j] << ' ';
+    }
+    cout << endl;
+  }
+  cout << "--------------------" << endl;
+}
+
+int value(const vector<vector<int>> &arr) {
+  int ret = INT32_MAX;
+  for (int i = 0; i < arr.size(); i++) {
+    int tmp = 0;
+    for (int j = 0; j < arr[i].size(); j++) {
+      tmp += arr[i][j];
+    }
+    ret = min(ret, tmp);
+  }
+  return ret;
+}
+
+void rotateRight(vector<vector<int>> &arr, int n, int m, int ms) {
+  int s = 1;
+  while (s <= ms) {
+    vector<int> tmp;
+
+    for (int i = m - s; i < m + s; i++) {
+      tmp.push_back(arr[n - s][i]);
+    }
+    for (int i = n - s; i < n + s; i++) {
+      tmp.push_back(arr[i][m + s]);
+    }
+    for (int i = m + s; i > m - s; i--) {
+      tmp.push_back(arr[n + s][i]);
+    }
+    for (int i = n + s; i > n - s; i--) {
+      tmp.push_back(arr[i][m - s]);
+    }
+
+    int idx = (-1 + tmp.size()) % tmp.size();
+
+    for (int i = m - s; i < m + s; i++) {
+      arr[n - s][i] = tmp[idx];
+      idx = (idx + 1) % tmp.size();
+    }
+    for (int i = n - s; i < n + s; i++) {
+      arr[i][m + s] = tmp[idx];
+      idx = (idx + 1) % tmp.size();
+    }
+    for (int i = m + s; i > m - s; i--) {
+      arr[n + s][i] = tmp[idx];
+      idx = (idx + 1) % tmp.size();
+    }
+    for (int i = n + s; i > n - s; i--) {
+      arr[i][m - s] = tmp[idx];
+      idx = (idx + 1) % tmp.size();
+    }
+
+    s++;
+  }
+}
+
+int main(void) {
+  fastio;
+
+  int n, m, k;
+  cin >> n >> m >> k;
+
+  vector<vector<int>> arr(n, vector<int>(m, 0));
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      cin >> arr[i][j];
+    }
+  }
+
+  vector<int> batch;
+  vector<tuple<int, int, int>> op;
+  for (int i = 0; i < k; i++) {
+    int r, c, s;
+    cin >> r >> c >> s;
+    op.push_back({r - 1, c - 1, s});
+    batch.push_back(i);
+  }
+
+  int ret = INT32_MAX;
+
+  do {
+
+    auto tmp = arr;
+
+    for (int i = 0; i < k; i++) {
+      auto [r, c, s] = op[batch[i]];
+      rotateRight(tmp, r, c, s);
+      // print(tmp);
+    }
+    ret = min(ret, value(tmp));
+
+  } while (next_permutation(batch.begin(), batch.end()));
+
+  cout << ret << endl;
+
+  return 0;
+}
+```
+</CH.Code>
+
+---
+
+#### 배열 돌리기 3 / 5 - 16935, 17470
+
+5번 6번 연산을 위해 4개의 영역으로 나누고, 해당 영역을 (상,하,좌,우) 4가지 정보로 나타냄
+
+이후, 각 영역의 정보만 바꿔가며 연산을 수행하고, 영역의 정보대로 원본 배열에서 추출해 새로운 정답 배열을 생성함
+
+<CH.Code>
+```cpp 17470.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+    ios::sync_with_stdio(false);                                               \
+    cin.tie(0);
+#define endl '\n'
+
+void extract(vector<vector<int>> &arr, tuple<int, int, int, int, int> &data,
+             vector<vector<int>> &res) {
+    vector<int> tmp;
+    auto [top, bottom, left, right, f] = data;
+
+    // cout << top << ' ' << bottom << ' ' << left << ' ' << right << endl;
+
+    if (top < bottom) {
+        if (left < right) {
+            // left - top
+            for (int i = top; i <= bottom; i++) {
+                for (int j = left; j <= right; j++) {
+                    tmp.push_back(f ? arr[i][j] : arr[j][i]);
+                }
+                res.push_back(tmp);
+                tmp.resize(0);
+            }
+        } else {
+            // right - top
+            for (int i = top; i <= bottom; i++) {
+                for (int j = left; j >= right; j--) {
+                    tmp.push_back(f ? arr[i][j] : arr[j][i]);
+                }
+                res.push_back(tmp);
+                tmp.resize(0);
+            }
+        }
+    } else {
+        if (left < right) {
+            // left - bottom
+            for (int i = top; i >= bottom; i--) {
+                for (int j = left; j <= right; j++) {
+                    tmp.push_back(f ? arr[i][j] : arr[j][i]);
+                }
+                res.push_back(tmp);
+                tmp.resize(0);
+            }
+        } else {
+            // right - bottom
+            for (int i = top; i >= bottom; i--) {
+                for (int j = left; j >= right; j--) {
+                    tmp.push_back(f ? arr[i][j] : arr[j][i]);
+                }
+                res.push_back(tmp);
+                tmp.resize(0);
+            }
+        }
+    }
+};
+
+void render(vector<vector<int>> &arr,
+            vector<tuple<int, int, int, int, int>> &data) {
+    vector<vector<int>> lt, rt, rb, lb;
+
+    extract(arr, data[0], lt);
+    extract(arr, data[1], rt);
+    extract(arr, data[2], rb);
+    extract(arr, data[3], lb);
+
+    for (int i = 0; i < lt.size(); i++) {
+        for (int j = 0; j < rt[0].size(); j++) {
+            lt[i].push_back(rt[i][j]);
+            lb[i].push_back(rb[i][j]);
+        }
+    }
+
+    for (int i = 0; i < lb.size(); i++) {
+        lt.push_back(lb[i]);
+    }
+
+    arr = lt;
+}
+
+void meta(vector<vector<int>> &arr,
+          vector<tuple<int, int, int, int, int>> &data) {
+    // left-top
+    data[0] = {0, arr.size() / 2 - 1, 0, arr[0].size() / 2 - 1, true};
+    // right-top
+    data[1] = {0, arr.size() / 2 - 1, arr[0].size() / 2, arr[0].size() - 1,
+               true};
+    // right-bottom
+    data[2] = {arr.size() / 2, arr.size() - 1, arr[0].size() / 2,
+               arr[0].size() - 1, true};
+    // left-bottom
+    data[3] = {arr.size() / 2, arr.size() - 1, 0, arr[0].size() / 2 - 1, true};
+}
+
+void work1(vector<tuple<int, int, int, int, int>> &data) {
+    for (int i = 0; i < data.size(); i++) {
+        auto [top, bottom, left, right, f] = data[i];
+        data[i] = {bottom, top, left, right, f};
+    }
+
+    tuple<int, int, int, int, int> tmp = data[0];
+    data[0] = data[3];
+    data[3] = tmp;
+    tmp = data[1];
+    data[1] = data[2];
+    data[2] = tmp;
+}
+
+void work2(vector<tuple<int, int, int, int, int>> &data) {
+    for (int i = 0; i < data.size(); i++) {
+        auto [top, bottom, left, right, f] = data[i];
+        data[i] = {top, bottom, right, left, f};
+    }
+    tuple<int, int, int, int, int> tmp = data[0];
+    data[0] = data[1];
+    data[1] = tmp;
+    tmp = data[2];
+    data[2] = data[3];
+    data[3] = tmp;
+}
+
+void work3(vector<tuple<int, int, int, int, int>> &data) {
+
+    for (int i = 0; i < data.size(); i++) {
+        auto [top, bottom, left, right, f] = data[i];
+        data[i] = {left, right, bottom, top, !f};
+    }
+
+    vector<tuple<int, int, int, int, int>> res;
+    for (int i = 0; i < 4; i++) {
+        res.push_back(data[(i - 1 + 4) % 4]);
+    }
+    data = res;
+}
+
+void work4(vector<tuple<int, int, int, int, int>> &data) {
+
+    for (int i = 0; i < data.size(); i++) {
+        auto [top, bottom, left, right, f] = data[i];
+        data[i] = {right, left, top, bottom, !f};
+    }
+
+    vector<tuple<int, int, int, int, int>> res;
+    for (int i = 0; i < 4; i++) {
+        res.push_back(data[(i + 1) % 4]);
+    }
+    data = res;
+}
+
+void work5(vector<tuple<int, int, int, int, int>> &data) {
+    vector<tuple<int, int, int, int, int>> res;
+    for (int i = 0; i < 4; i++) {
+        res.push_back(data[(i - 1 + 4) % 4]);
+    }
+    data = res;
+}
+
+void work6(vector<tuple<int, int, int, int, int>> &data) {
+    vector<tuple<int, int, int, int, int>> res;
+    for (int i = 0; i < 4; i++) {
+        res.push_back(data[(i + 1) % 4]);
+    }
+    data = res;
+}
+
+void work(vector<vector<int>> &arr, int type,
+          vector<tuple<int, int, int, int, int>> &ctx) {
+
+    switch (type) {
+    case 1:
+        work1(ctx);
+        break;
+    case 2:
+        work2(ctx);
+        break;
+    case 3:
+        work3(ctx);
+        break;
+    case 4:
+        work4(ctx);
+        break;
+    case 5:
+        work5(ctx);
+        break;
+    case 6:
+        work6(ctx);
+        break;
+    }
+}
+
+int main(void) {
+    fastio;
+
+    int n, m, r;
+    cin >> n >> m >> r;
+
+    vector<vector<int>> arr(n, vector<int>(m, 0));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> arr[i][j];
+        }
+    }
+
+    vector<int> op(r);
+
+    for (int i = 0; i < r; i++) {
+        cin >> op[i];
+    }
+
+    vector<int> stack, works;
+    // 같은 결과 처리
+    for (int i = 0; i < r; i++) {
+        if (stack.empty()) {
+            stack.push_back(op[i]);
+        } else {
+            if (op[i] <= 2 && stack[stack.size() - 1] == op[i]) {
+                stack.pop_back();
+            } else if (stack.size() >= 3 && op[i] >= 3) {
+
+                bool f = true;
+                // whole
+                for (int j = 0; j < 3; j++) {
+                    f = f && stack[stack.size() - 1 - j] == op[i];
+                }
+                if (f) {
+                    for (int j = 0; j < 3; j++) {
+                        stack.pop_back();
+                    }
+                } else {
+                    stack.push_back(op[i]);
+                }
+
+            } else {
+                stack.push_back(op[i]);
+            }
+        }
+    }
+
+    vector<tuple<int, int, int, int, int>> ctx(4);
+    meta(arr, ctx);
+    for (int i = 0; i < stack.size(); i++) {
+        work(arr, stack[i], ctx);
+    }
+    render(arr, ctx);
+
+    for (int i = 0; i < arr.size(); i++) {
+        for (int j = 0; j < arr[0].size(); j++) {
+            cout << arr[i][j] << ' ';
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
+```
+</CH.Code>
+
+---
+
+#### 배열 돌리기 6 / 7 - 20327, 20328
+
+8가지의 연산을 각 단계가 가진 4가지 영역(좌상단, 우상단, 우하단, 좌하단)을 **재배치** 하는 연산으로 변형
+    - 1, 2, 3, 4번 연산은 $\ell$ 값보다 작거나 같은 단계에 적용하는 연산
+    - 5, 6, 7, 8번 연산은 $\ell$ 값보다 큰 단계에 적용하는 연산
+    - ex) $ 4 \times 4 $ 배열이 오른쪽 회전한 것은 하위 단계의 $ 4 \times 4 $ 배열이 하나씩 오른쪽 회전하고, 그것들을 재배치한 것과 같다.
+
+<br/>
+
+그러면 한 번의 연산에 $4^{10}$ 만큼 시간이 걸리는 것은 아닌가?
+    - 하위 모든 영역에 재배치 연산을 하는 것이 아닌, 단계마다 수행해야할 연산을 따로 저장하고, 이후 일괄 적용한다. 그러면 정답을 구할 때만 $4^{10}$ 만큼을 수행하면 된다.
+    - **코드의 Filter 참조**
+
+<CH.Code>
+
+```cpp 20328.cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio                                                                 \
+  ios::sync_with_stdio(false);                                                 \
+  cin.tie(0);
+#define endl '\n'
+
+class Filter {
+public:
+  int level;
+  Filter *child;
+  tuple<int, int, int, int> order;
+  Filter(int level) {
+    if (level > 0) {
+      this->level = level;
+      this->child = new Filter(level - 1);
+      this->order = make_tuple(0, 1, 2, 3);
+    }
+  }
+  ~Filter(){};
+
+  void vFlip(int level) {
+    if (this->level >= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {bl, br, tr, tl};
+    }
+    if (this->level > 1) {
+      child->vFlip(level);
+    }
+  }
+
+  void hFlip(int level) {
+    if (this->level >= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {tr, tl, bl, br};
+    }
+
+    if (this->level > 1) {
+      child->hFlip(level);
+    }
+  }
+
+  void rRotate(int level) {
+    if (this->level >= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {bl, tl, tr, br};
+    }
+    if (this->level > 1) {
+      child->rRotate(level);
+    }
+  }
+
+  void lRotate(int level) {
+    if (this->level >= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {tr, br, bl, tl};
+    }
+
+    if (this->level > 1) {
+      child->lRotate(level);
+    }
+  }
+
+  void vertical(int level) {
+    if (this->level <= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {bl, br, tr, tl};
+    }
+    if (this->level > 1) {
+      child->vertical(level);
+    }
+  }
+
+  void horizontal(int level) {
+    if (this->level <= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {tr, tl, bl, br};
+    }
+    if (this->level > 1) {
+      child->horizontal(level);
+    }
+  }
+
+  void right(int level) {
+    if (this->level <= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {bl, tl, tr, br};
+    }
+    if (this->level > 1) {
+      child->right(level);
+    }
+  }
+
+  void left(int level) {
+    if (this->level <= level) {
+      auto [tl, tr, br, bl] = this->order;
+      this->order = {tr, br, bl, tl};
+    }
+    if (this->level > 1) {
+      child->left(level);
+    }
+  }
+
+  tuple<int, int, int, int> get(int level) {
+    if (this->level == level) {
+      return order;
+    }
+    return this->child->get(level);
+  }
+};
+
+class Node {
+public:
+  int level;
+  Node *child[4];
+  pair<int, int> target;
+  Node(int top, int left, int level) {
+    this->level = level;
+    int size = 1 << level;
+    if (level > 0) {
+      child[0] = new Node(top + 0, left + 0, level - 1);
+      child[1] = new Node(top + 0, left + size / 2, level - 1);
+      child[2] = new Node(top + size / 2, left + size / 2, level - 1);
+      child[3] = new Node(top + size / 2, left + 0, level - 1);
+    } else {
+      target = {top, left};
+    }
+  };
+  ~Node(){};
+
+  void print(const vector<vector<int>> &src, vector<vector<int>> &dst,
+             Filter *filter, pair<int, int> pivot) {
+    auto [y, x] = pivot;
+    if (level == 0) {
+      dst[y][x] = src[target.first][target.second];
+    } else {
+      int size = 1 << level;
+      auto [tl, tr, br, bl] = filter->get(this->level);
+      child[tl]->print(src, dst, filter, {y + 0, x + 0});
+      child[tr]->print(src, dst, filter, {y + 0, x + size / 2});
+      child[br]->print(src, dst, filter, {y + size / 2, x + size / 2});
+      child[bl]->print(src, dst, filter, {y + size / 2, x + 0});
+    }
+  }
+};
+
+int main(void) {
+  fastio;
+
+  int n, r;
+  cin >> n >> r;
+
+  vector<vector<int>> arr((1 << n), vector<int>((1 << n), 0)),
+      ans((1 << n), vector<int>((1 << n), 0));
+  for (int i = 0; i < 1 << n; i++) {
+    for (int j = 0; j < 1 << n; j++) {
+      cin >> arr[i][j];
+    }
+  }
+
+  Node *root = new Node(0, 0, n);
+  Filter *filter = new Filter(n);
+
+  for (int i = 0; i < r; i++) {
+    int k, l;
+    cin >> k >> l;
+    switch (k) {
+    case 1:
+      filter->vertical(l);
+      break;
+    case 2:
+      filter->horizontal(l);
+      break;
+    case 3:
+      filter->right(l);
+      break;
+    case 4:
+      filter->left(l);
+      break;
+    case 5:
+      filter->vFlip(l + 1);
+      break;
+    case 6:
+      filter->hFlip(l + 1);
+      break;
+    case 7:
+      filter->rRotate(l + 1);
+      break;
+    case 8:
+      filter->lRotate(l + 1);
+      break;
+    }
+  }
+
+  root->print(arr, ans, filter, {0, 0});
+
+  for (int i = 0; i < ans.size(); i++) {
+    for (int j = 0; j < ans[0].size(); j++) {
+      cout << ans[i][j] << ' ';
+    }
+    cout << endl;
+  }
+
+  return 0;
+}
+```
+
+```go 20328.go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+)
+
+const (
+	debug       = true
+	inf   int64 = math.MaxInt64
+)
+
+/*========================================================================*/
+/* I/O */
+
+var (
+	// scanner = bufio.NewScanner(os.Stdin)
+	// outF, _ = os.OpenFile("out.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	// print   = bufio.NewWriter(outF)
+
+	scanner = bufio.NewScanner(os.Stdin)
+	print   = bufio.NewWriter(os.Stdout)
+)
+
+func nextInt() int64 {
+	scanner.Scan()
+	text := scanner.Text()
+	v, _ := strconv.ParseInt(text, 10, 64)
+	return v
+}
+
+func nextString() string {
+	scanner.Scan()
+	text := scanner.Text()
+	return text
+}
+
+/*========================================================================*/
+
+type Filter struct {
+	lv    int
+	order []int
+	child *Filter
+}
+
+func NewFilter(lv int) *Filter {
+	if lv > 0 {
+		ret := &Filter{
+			lv:    lv,
+			order: []int{0, 1, 2, 3},
+			child: NewFilter(lv - 1),
+		}
+		return ret
+	}
+	return nil
+}
+
+func (this *Filter) vFlip(level int) {
+	if this.lv >= level {
+		tmp := this.order
+		this.order = []int{tmp[3], tmp[2], tmp[1], tmp[0]}
+	}
+	if this.lv > 1 {
+		this.child.vFlip(level)
+	}
+}
+
+func (this *Filter) hFlip(level int) {
+	if this.lv >= level {
+		tmp := this.order
+		this.order = []int{tmp[1], tmp[0], tmp[3], tmp[2]}
+	}
+	if this.lv > 1 {
+		this.child.hFlip(level)
+	}
+}
+
+func (this *Filter) rRotate(level int) {
+	if this.lv >= level {
+		tmp := this.order
+		this.order = []int{tmp[3], tmp[0], tmp[1], tmp[2]}
+	}
+	if this.lv > 1 {
+		this.child.rRotate(level)
+	}
+}
+
+func (this *Filter) lRotate(level int) {
+	if this.lv >= level {
+		tmp := this.order
+		this.order = []int{tmp[1], tmp[2], tmp[3], tmp[0]}
+	}
+	if this.lv > 1 {
+		this.child.lRotate(level)
+	}
+}
+
+func (this *Filter) vertical(level int) {
+	if this.lv <= level {
+		tmp := this.order
+		this.order = []int{tmp[3], tmp[2], tmp[1], tmp[0]}
+	}
+	if this.lv > 1 {
+		this.child.vertical(level)
+	}
+}
+
+func (this *Filter) horizontal(level int) {
+	if this.lv <= level {
+		tmp := this.order
+		this.order = []int{tmp[1], tmp[0], tmp[3], tmp[2]}
+	}
+	if this.lv > 1 {
+		this.child.horizontal(level)
+	}
+}
+
+func (this *Filter) right(level int) {
+	if this.lv <= level {
+		tmp := this.order
+		this.order = []int{tmp[3], tmp[0], tmp[1], tmp[2]}
+	}
+	if this.lv > 1 {
+		this.child.right(level)
+	}
+}
+
+func (this *Filter) left(level int) {
+	if this.lv <= level {
+		tmp := this.order
+		this.order = []int{tmp[1], tmp[2], tmp[3], tmp[0]}
+	}
+	if this.lv > 1 {
+		this.child.left(level)
+	}
+}
+
+func (this *Filter) get(level int) []int {
+	if this.lv == level {
+		return this.order
+	}
+	return this.child.get(level)
+}
+
+/*========================================================================*/
+
+type Renderer struct {
+	lv    int
+	child []*Renderer
+	y, x  int
+}
+
+func NewRenderer(y, x, lv int) *Renderer {
+	ret := &Renderer{
+		lv:    lv,
+		child: nil,
+	}
+
+	if lv > 0 {
+		size := 1 << lv
+		ret.child = make([]*Renderer, 4)
+		ret.child[0] = NewRenderer(y+0, x+0, lv-1)
+		ret.child[1] = NewRenderer(y+0, x+size/2, lv-1)
+		ret.child[2] = NewRenderer(y+size/2, x+size/2, lv-1)
+		ret.child[3] = NewRenderer(y+size/2, x+0, lv-1)
+	} else {
+		ret.y, ret.x = y, x
+	}
+
+	return ret
+}
+
+func (this *Renderer) render(src, dst [][]int, filter *Filter, y, x int) {
+	if this.lv == 0 {
+		dst[y][x] = src[this.y][this.x]
+	} else {
+		size := 1 << this.lv
+		order := filter.get(this.lv)
+		this.child[order[0]].render(src, dst, filter, y+0, x+0)
+		this.child[order[1]].render(src, dst, filter, y+0, x+size/2)
+		this.child[order[2]].render(src, dst, filter, y+size/2, x+size/2)
+		this.child[order[3]].render(src, dst, filter, y+size/2, x+0)
+	}
+}
+
+func main() {
+	scanner.Split(bufio.ScanWords)
+	defer print.Flush()
+
+	n, r := nextInt(), nextInt()
+
+	arr, ans := make([][]int, 1<<n), make([][]int, 1<<n)
+	for i := 0; i < 1<<n; i++ {
+		arr[i] = make([]int, 1<<n)
+		ans[i] = make([]int, 1<<n)
+		for j := 0; j < 1<<n; j++ {
+			arr[i][j] = int(nextInt())
+		}
+	}
+
+	filter := NewFilter(int(n))
+
+	for i := 0; i < int(r); i++ {
+		k, l := int(nextInt()), int(nextInt())
+
+		switch k {
+		case 1:
+			filter.vertical(l)
+		case 2:
+			filter.horizontal(l)
+		case 3:
+			filter.right(l)
+		case 4:
+			filter.left(l)
+		case 5:
+			filter.vFlip(l + 1)
+		case 6:
+			filter.hFlip(l + 1)
+		case 7:
+			filter.rRotate(l + 1)
+		case 8:
+			filter.lRotate(l + 1)
+		}
+	}
+
+	renderer := NewRenderer(0, 0, int(n))
+	renderer.render(arr, ans, filter, 0, 0)
+
+	for i := 0; i < 1<<n; i++ {
+		for j := 0; j < 1<<n; j++ {
+			fmt.Fprintf(print, "%d ", ans[i][j])
+		}
+		fmt.Fprintf(print, "\n")
+	}
+
+}
+```
+
+</CH.Code>
