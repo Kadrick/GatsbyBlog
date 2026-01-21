@@ -38,7 +38,7 @@ const IndexPage: React.FC<PageProps> = () => {
         <VStack h={"100px"} justifyContent={"space-around"}>
           <Heading as={"h2"}>가짜 개발자 이야기</Heading>
           <Text>
-            회사 다니기 싫다 / 돈 벌고 싶다 / 쉬고 싶다 / 시간 참 빠르다
+            메인 페이지에 뭘 적으면 좋을까?
           </Text>
         </VStack>
         <Center h={"70px"}>

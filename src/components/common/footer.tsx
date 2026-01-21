@@ -13,14 +13,6 @@ const Footer: React.FC<{}> = () => {
           target={"_blank"}
         >
           Gokarna
-        </Link>{" "}
-        & CSS by{" "}
-        <Link
-          fontWeight={"bold"}
-          href={"https://github.com/kasterra"}
-          target={"_blank"}
-        >
-          Kasterra
         </Link>
         <br />©{" "}
         <Link
