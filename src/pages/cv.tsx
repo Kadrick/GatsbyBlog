@@ -70,23 +70,33 @@ const CVInfo = {
   },
   aboutMe: {
     description: [
-      "2년차 개발자입니다.",
       "C++와 Golang을 주로 사용합니다.",
       "게임 개발과 네트워킹 기술에 관심이 있습니다.",
     ],
   },
   contact: {
-    address: "서울, 대한민국",
+    address: "대구, 대한민국",
     email: "kbk2581553@gmail.com",
     github: "https://github.com/Kadrick",
     linkedIn: "https://www.linkedin.com/in/보권-강-7278a6227/",
   },
   experience: [
     {
+      Affiliation: "NHN Cloud",
+      position: "Part-Time",
+      start: "July, 2025",
+      end: "December, 2025",
+      description: [
+        "백오피스 시스템 유지보수",
+        "AWX 리서치",
+        "OPA(Open Policy Agent)를 활용한 제로트러스트 보안 모델 검증 및 정책 엔진 PoC 수행",
+      ],
+    },
+    {
       Affiliation: "Markany",
       position: "개발자 / Developer",
       start: "April, 2022",
-      end: "",
+      end: "August, 2024",
       description: [
         "산업기능요원으로 복무",
         "워터마크 삽입 및 미디어 스트리밍 시스템 구축",
@@ -99,9 +109,9 @@ const CVInfo = {
     {
       Affiliation: "경북대학교",
       degree: "학사",
-      major: "컴퓨터 과학",
+      major: "컴퓨터공학과",
       start: "March, 2020",
-      end: "",
+      end: "August, 2026",
       gpa: "yet",
     },
   ],
