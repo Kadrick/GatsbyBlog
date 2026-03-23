@@ -26,7 +26,7 @@ const IndexPage: React.FC<PageProps> = () => {
   return (
     <Basic>
       <Seo
-        title={"가짜 개발자 이야기"}
+        title={"개발자의 혼잣말"}
         description={"변방 개발자 블로그"}
         url={"/"}
       />
@@ -36,10 +36,8 @@ const IndexPage: React.FC<PageProps> = () => {
         justifyContent={"center"}
       >
         <VStack h={"100px"} justifyContent={"space-around"}>
-          <Heading as={"h2"}>가짜 개발자 이야기</Heading>
-          <Text>
-            메인 페이지에 뭘 적으면 좋을까?
-          </Text>
+          <Heading as={"h2"}>반가워요!</Heading>
+          <Text>메인 페이지에 뭘 적으면 좋을까요?</Text>
         </VStack>
         <Center h={"70px"}>
           <SocialIcon
