@@ -3,10 +3,10 @@ import React from "react";
 import Tab from "../../layout/tab";
 
 import {
+  Box,
   Card,
   CardBody,
   Container,
-  Flex,
   Text,
   Wrap,
   WrapItem,
@@ -51,39 +51,73 @@ const Projects: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
   return (
     <Tab tabName={"Projects"} description={"열심히 했어요"}>
       <Container mt={"70px"}>
-        <Wrap justify={"center"} spacing={"20px"}>
+        <Wrap justify={"center"} spacing={"20px"} align={"stretch"}>
           {displayList.map((post) => (
-            <WrapItem w={"45%"} key={post.slug}>
-              <Link to={"/post/" + post.slug}>
+            <WrapItem
+              w={{ base: "100%", sm: "45%" }}
+              key={post.slug}
+              display={"flex"}
+              alignSelf={"stretch"}
+            >
+              <Link
+                to={"/post/" + post.slug}
+                style={{ display: "flex", flex: 1, width: "100%" }}
+              >
                 <Card
                   width={"100%"}
+                  flex={1}
+                  display={"flex"}
+                  flexDirection={"column"}
                   mb={"10px"}
                   overflow={"hidden"}
                   _hover={{ boxShadow: "md" }}
                   transition={"box-shadow 0.15s ease"}
                 >
-                  {post.cover ? (
-                    <Image
-                      src={post.cover}
-                      style={{
-                        width: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : null}
-                  <CardBody>
-                    <Flex
-                      justifyContent={"space-between"}
-                      align={"flex-start"}
-                      gap={4}
-                    >
-                      <Text fontSize={"17px"} fontWeight={"medium"}>
+                  <Box
+                    aspectRatio={"16 / 9"}
+                    w={"100%"}
+                    overflow={"hidden"}
+                    flexShrink={0}
+                    bg={"gray.100"}
+                  >
+                    {post.cover ? (
+                      <Image
+                        src={post.cover}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                        imgStyle={{ objectFit: "cover" }}
+                      />
+                    ) : null}
+                  </Box>
+                  <CardBody
+                    flex={1}
+                    display={"flex"}
+                    flexDirection={"column"}
+                    justifyContent={"space-between"}
+                    pt={4}
+                  >
+                    <Box>
+                      <Text
+                        fontSize={"17px"}
+                        fontWeight={"medium"}
+                        noOfLines={2}
+                        minH={"3.2em"}
+                        lineHeight={"1.6"}
+                      >
                         {post.title}
                       </Text>
-                      <Text flexShrink={0} color={"gray.500"} fontSize={"sm"}>
+                      <Text
+                        mt={2}
+                        flexShrink={0}
+                        color={"gray.500"}
+                        fontSize={"sm"}
+                      >
                         {post.date}
                       </Text>
-                    </Flex>
+                    </Box>
                   </CardBody>
                 </Card>
               </Link>

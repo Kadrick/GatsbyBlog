@@ -65,25 +65,27 @@ const Archive: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
       description={"원숭이가 셰익스피어의 희곡을 칠 확률"}
     >
       <Container>
-        {[...displayTarget.entries()].map((yearSet, key) => {
-          if (yearSet[0] !== 0) {
-            return (
-              <Box mt={"70px"} key={key}>
-                <Heading>{yearSet[0]}</Heading>
-                {yearSet[1].map((info, key) => (
-                  <Box mt={"20px"} key={key}>
-                    <Link to={"/post/" + info.slug}>
-                      <Flex justifyContent={"space-between"}>
-                        <Text size={"17px"}>{info.title}</Text>
-                        <Text>{info.date}</Text>
-                      </Flex>
-                    </Link>
-                  </Box>
-                ))}
-              </Box>
-            );
-          }
-        })}
+        {[...displayTarget.entries()]
+          .sort((a, b) => b[0] - a[0])
+          .map((yearSet, key) => {
+            if (yearSet[0] !== 0) {
+              return (
+                <Box mt={"70px"} key={key}>
+                  <Heading>{yearSet[0]}</Heading>
+                  {yearSet[1].map((info, key) => (
+                    <Box mt={"20px"} key={key}>
+                      <Link to={"/post/" + info.slug}>
+                        <Flex justifyContent={"space-between"}>
+                          <Text size={"17px"}>{info.title}</Text>
+                          <Text>{info.date}</Text>
+                        </Flex>
+                      </Link>
+                    </Box>
+                  ))}
+                </Box>
+              );
+            }
+          })}
 
         {displayTarget.has(0) && (
           <Box w={"100%"} mt={"70px"}>
