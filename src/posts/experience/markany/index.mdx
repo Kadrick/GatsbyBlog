@@ -1,0 +1,106 @@
+---
+title: "Markany"
+tags: ["Experience"]
+date: "2024-08-01"
+description: "Widevine DRM 기반 프리미엄 콘텐츠 보호와 CloudFormation IaC 자동화"
+slug: "experience/markany"
+cover: "works/projects.png"
+draft: false
+---
+
+## 개요
+
+- **역할:** 산업기능요원 — 미디어 스트리밍 및 인프라 자동화
+- **기간:** 2022.04 ~ 2024.08
+
+Widevine DRM 기반 프리미엄 콘텐츠 보호와 CloudFormation IaC 자동화를 담당했다.
+
+---
+
+## 아키텍처
+
+<Mermaid chart={`flowchart LR
+  subgraph streaming [Media Streaming]
+    CMS[CMS]
+    Packager[HLS / DASH Packager]
+    DRM[Widevine DRM]
+    License[Custom License Server]
+  end
+
+  subgraph aws [AWS Infrastructure]
+    CFN[CloudFormation]
+    Media[AWS Media Services]
+    CDN[CloudFront]
+  end
+
+  CMS --> Packager
+  Packager --> DRM
+  DRM --> License
+  CFN --> Media
+  Media --> CDN
+  License --> CDN`} />
+
+---
+
+## 기술적 과제
+
+<CaseStudy
+  id="markany-widevine"
+  title="Case 1. Widevine DRM 적용 및 커스텀 라이선스 서버 구현"
+  problem={
+    <>
+      프리미엄 미디어 콘텐츠의 무단 배포 및 불법 다운로드를 방지할
+      암호화 체계가 필요했다.
+    </>
+  }
+  action={
+    <>
+      Widevine DRM을 도입하고, 재생 권한 검증을 위한 커스텀 라이선스
+      서버를 직접 설계·구현했다.
+    </>
+  }
+  application={
+    <>
+      AWS 미디어 서비스와 연동한 HLS/DASH 패키징 및 토큰 기반 보안
+      파이프라인을 구축했다.
+    </>
+  }
+  result={
+    <>
+      콘텐츠 보안성을 극대화하고 안전한 스트리밍 서비스 환경을
+      구축했다.
+    </>
+  }
+/>
+
+<CaseStudy
+  id="markany-cfn"
+  title="Case 2. CloudFormation을 통한 인프라 프로비저닝 자동화"
+  problem={
+    <>
+      다수의 AWS 리소스를 수동 설정하면서 휴먼 에러가 발생했고, 환경
+      복제에 과도한 시간이 소요되었다.
+    </>
+  }
+  action={
+    <>
+      CloudFormation 기반 IaC를 도입하고 전체 인프라 자동화 템플릿을
+      설계했다.
+    </>
+  }
+  application={<>환경별 재사용 가능한 배포 파이프라인을 구축했다.</>}
+  result={
+    <>
+      인프라 구축 시간을 획기적으로 단축하고 운영 일관성을 확보했다.
+    </>
+  }
+/>
+
+---
+
+## 업데이트 로그
+
+| 날짜 | 추가 / 변경 |
+| --- | --- |
+| 2023-06 | Case 1 — Widevine DRM 및 라이선스 서버 |
+| 2024-03 | Case 2 — CloudFormation IaC |

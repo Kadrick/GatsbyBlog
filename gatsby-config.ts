@@ -1,5 +1,7 @@
 import type { GatsbyConfig } from "gatsby";
 import { remarkCodeHike } from "@code-hike/mdx";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
 import Ayu from "./ayu-mirage.json";
 
 const config: GatsbyConfig = {
@@ -49,6 +51,7 @@ const config: GatsbyConfig = {
         ],
         mdxOptions: {
           remarkPlugins: [
+            remarkGfm,
             [
               remarkCodeHike,
               {
@@ -57,6 +60,7 @@ const config: GatsbyConfig = {
               },
             ],
           ],
+          rehypePlugins: [rehypeSlug],
         },
       },
     },

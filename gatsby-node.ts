@@ -1,6 +1,21 @@
 import path from "path";
 import { GatsbyNode } from "gatsby";
 
+export const onCreateWebpackConfig: GatsbyNode["onCreateWebpackConfig"] = ({
+  stage,
+  actions,
+}) => {
+  if (stage === "build-html" || stage === "develop-html") {
+    actions.setWebpackConfig({
+      resolve: {
+        alias: {
+          mermaid: false,
+        },
+      },
+    });
+  }
+};
+
 type AllMDXQuery = {
   allMdx: {
     edges: {

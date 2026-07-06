@@ -23,7 +23,7 @@ type Info = {
   cover?: string | null;
 };
 
-const Projects: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
+const Experience: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
   const displayList: Info[] = data.allMdx.edges.map((post) => {
     const d = FormatDate(new Date(post.node.frontmatter?.date || ""));
 
@@ -41,17 +41,17 @@ const Projects: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
   });
 
   return (
-    <Tab tabName={"Projects"} description={"열심히 했어요"}>
+    <Tab tabName={"Experience"} description={"경력 및 기술 과제 정리"}>
       <Container mt={"70px"} maxW={"1400px"} pb={"80px"}>
         <VStack spacing={4} align={"stretch"}>
-          {displayList.map((post) => (
+          {displayList.map((item) => (
             <HorizontalCard
-              key={post.slug}
-              to={"/post/" + post.slug}
-              title={post.title}
-              description={post.description}
-              date={post.date}
-              cover={post.cover}
+              key={item.slug}
+              to={"/post/" + item.slug}
+              title={item.title}
+              description={item.description}
+              date={item.date}
+              cover={item.cover}
             />
           ))}
         </VStack>
@@ -60,14 +60,14 @@ const Projects: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
   );
 };
 
-export default Projects;
+export default Experience;
 
 export const query = graphql`
   {
     allMdx(
       sort: { frontmatter: { date: DESC } }
       filter: {
-        frontmatter: { tags: { in: ["Projects"] }, draft: { ne: true } }
+        frontmatter: { tags: { in: ["Experience"] }, draft: { ne: true } }
       }
     ) {
       edges {

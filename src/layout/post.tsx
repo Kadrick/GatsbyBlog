@@ -1,18 +1,19 @@
-import React from "react";
+import React, { useRef } from "react";
 import { PageProps, graphql } from "gatsby";
 import { MDXProvider } from "@mdx-js/react";
 import Basic from "./basic";
 import MdxComponents from "../components/post/components";
+import PostToc from "../components/post/post-toc";
 import "@code-hike/mdx/dist/index.css";
 import {
-  Container,
+  Box,
+  Flex,
   Heading,
   VStack,
   Text,
   Wrap,
   WrapItem,
   Tag,
-  Box,
 } from "@chakra-ui/react";
 import Seo from "./seo";
 
@@ -22,6 +23,7 @@ const Post: React.FC<
     site: { siteMetadata: Queries.SiteSiteMetadata };
   }>
 > = ({ data, children }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const month = [
     "January",
     "February",
@@ -62,7 +64,7 @@ const Post: React.FC<
         }
         description={data.mdx.frontmatter.description || ""}
       />
-      <Box pt={"50px"} width={"80vw"}>
+      <Box pt={"50px"} width={{ base: "92vw", lg: "80vw" }} maxW={"1100px"}>
         <Heading>{data.mdx.frontmatter.title}</Heading>
         {data.mdx.frontmatter.description && (
           <Text mt={"5px"} color={"gray"}>
@@ -87,9 +89,40 @@ const Post: React.FC<
           </Wrap>
         )}
       </Box>
-      <Box mt={"50px"} width={"80vw"}>
-        <MDXProvider components={MdxComponents}>{children}</MDXProvider>
-      </Box>
+      <Flex
+        mt={"50px"}
+        width={{ base: "92vw", lg: "80vw" }}
+        maxW={"1100px"}
+        gap={{ base: 0, xl: 10 }}
+        align={"flex-start"}
+      >
+        <Box
+          flex={1}
+          minW={0}
+          ref={contentRef}
+          sx={{
+            "& h2, & h3, & h4, & section[id]": {
+              scrollMarginTop: "90px",
+            },
+            "& svg": {
+              display: "block",
+              maxWidth: "100%",
+              height: "auto",
+              my: 6,
+              mx: "auto",
+            },
+          }}
+        >
+          <MDXProvider components={MdxComponents}>{children}</MDXProvider>
+        </Box>
+        <Box
+          display={{ base: "none", lg: "block" }}
+          w={"200px"}
+          flexShrink={0}
+        >
+          <PostToc contentRef={contentRef} />
+        </Box>
+      </Flex>
     </Basic>
   );
 };

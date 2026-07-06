@@ -2,46 +2,152 @@
 title: "KNU Online Judge"
 tags: ["Projects"]
 date: "2026-03-23"
-description: ""
+description: "교육용 Online Judge — 트래픽 피크 대응 EDA 전환 및 DB 성능 최적화"
 slug: "projects/judge"
 cover: "cover/projects/judge.png"
 draft: false
 ---
 
-### 개요
+## 개요
 
-#### 기술 스택
+### 기술 스택
 
 - TypeScript, React
 - Go
 - PostgreSQL
 - RabbitMQ
-- Github Actions
+- GitHub Actions
 - Docker
 
-#### 프로젝트 소개
+### 프로젝트 소개
 
-- 개발 기간: 2024.08 ~ 2026.08
-
-- 학부 연구생 참여 후 시작한 프로젝트 (1인 개발)
-- 교내 강의에서 사용하기 위한 온라인 채점 시스템 개발
-- 코드 채점 외에 문제 제출 및 성적 통계 기능 제공
+- **개발 기간:** 2024.08 ~ 2026.08 (운영 중)
+- **역할:** 1인 개발 (학부 연구생 참여 후 시작)
+- **목표:** 교내 강의에서 사용하는 온라인 채점 시스템 — 코드 채점, 문제 제출, 성적 통계 제공
 
 ---
 
-### 주요 작업
+## 아키텍처
 
-- 비동기 처리 기반 성능 최적화를 진행
-  - 과제 제출 마감 시점의 트래픽 폭주에 대응하기 위해 메세지 큐 기반의 비동기 채점 아키텍처를 설계하여 서버 부하 분산 및 응답성 개선
-- 데이터 모델링 및 UI/UX 고도화
-  - 사용자 경험 개선을 위한 UI 리뉴얼 및 채점 데이터 관리 효율화를 위한 DB 스키마 재설계
-  - 교수 및 조교용 대시보드를 개발하여 실시간 채점 현황 모니터링, 성적 통계 시각화 및 과제 관리 기능 제공
-- 시스템 확장성 확보
-  - Java, Python 등 다양한 채점 지원을 위한 엔진 확장 및 런타임 환경 구축
-- 실제 사용자 피드백을 기반으로 한 성능 모니터링 및 신규 기능 업데이트 진행 중
+운영 중 발생한 병목에 따라 아키텍처가 단계적으로 개선되었다. 아래는 현재 기준 전체 구조다.
 
-<br />
+<Mermaid chart={`flowchart TB
+  subgraph clients [Clients]
+    Student[학생]
+    Staff[교수 / 조교]
+  end
 
-##### 링크
+  subgraph app [Application Layer]
+    Web[React Frontend]
+    API[Go API Server]
+  end
+
+  subgraph async [Async Processing]
+    MQ[(RabbitMQ)]
+    Worker1[Judge Worker]
+    Worker2[Judge Worker]
+  end
+
+  subgraph data [Data Layer]
+    PG[(PostgreSQL)]
+    PG_P1[Partition: 2024]
+    PG_P2[Partition: 2025]
+    PG_P3[Partition: 2026]
+  end
+
+  Student --> Web
+  Staff --> Web
+  Web --> API
+  API -->|채점 요청 publish| MQ
+  MQ --> Worker1
+  MQ --> Worker2
+  Worker1 --> PG
+  Worker2 --> PG
+  API --> PG
+  PG --> PG_P1
+  PG --> PG_P2
+  PG --> PG_P3`} />
+
+---
+
+## 기술적 과제
+
+> 새로운 과제가 생기면 **Case N** 블록을 아래에 추가하고, [업데이트 로그](#업데이트-로그)에 날짜와 함께 기록하세요.
+
+<CaseStudy
+  id="case-1-rabbitmq-eda"
+  title="Case 1. RabbitMQ 기반 이벤트 기반 아키텍처(EDA) 전환"
+  problem={
+    <>
+      실습 마감 직전 집중되는 대규모 트래픽으로 모놀리식 구조의 API 서버가 다운되었다.
+      채점 요청과 실행 로직이 동기적으로 묶여 있어 피크 타임에 병목이 발생했다.
+    </>
+  }
+  action={
+    <>
+      RabbitMQ 메시지 큐를 도입하여 채점 요청 수신과 실제 실행 로직을 분리했다.
+      API는 요청을 큐에 publish하고, Judge Worker가 비동기로 소비하는 구조로 개편했다.
+    </>
+  }
+  application={
+    <>
+      채점 요청 → 큐 적재 → Worker pool 분산 처리 파이프라인을 구성했다.
+    </>
+  }
+  result={
+    <>
+      피크 타임 병목 현상을 제거했고, 120명 이상 동시 접속 상황에서도 무중단 운영을 달성했다.
+    </>
+  }
+/>
+
+<Mermaid chart={`sequenceDiagram
+  participant C as Client
+  participant A as API Server
+  participant Q as RabbitMQ
+  participant W as Judge Worker
+
+  C->>A: 코드 제출
+  A->>Q: 채점 Job publish
+  A-->>C: 202 Accepted
+  Q->>W: Job consume
+  W->>W: 샌드박스 실행 / 채점
+  W->>A: 결과 저장`} />
+
+<CaseStudy
+  id="case-2-cursor-partitioning"
+  title="Case 2. Cursor 페이지네이션 및 수평 파티셔닝을 통한 성능 최적화"
+  problem={
+    <>
+      2년간 누적된 제출·채점 데이터로 인해 조회 API 응답이 3~4초까지 지연되었다.
+      OFFSET 기반 페이지네이션은 데이터가 커질수록 스캔 비용이 급증했다.
+    </>
+  }
+  action={
+    <>
+      OFFSET 대신 Cursor(keyset) 기반 페이지네이션으로 전환했다.
+      기간별 수평 파티셔닝을 적용하여 조회 범위를 물리적으로 분리했다.
+    </>
+  }
+  result={
+    <>
+      1,000회 테스트 기준 평균 응답 시간을 4초에서 0.5초로 단축했다 (약 87% 개선).
+    </>
+  }
+/>
+
+---
+
+## 업데이트 로그
+
+| 날짜 | 추가 / 변경 |
+| --- | --- |
+| 2025-03 | Case 1 — RabbitMQ EDA 전환 |
+| 2026-03 | Case 2 — Cursor 페이지네이션 및 수평 파티셔닝 |
+| _예정_ | _새 Case 추가 시 이 표에 한 줄 추가_ |
+
+---
+
+## 링크
 
 <Embed type={"normal"} link={"https://coding.knu.ac.kr/"} />
