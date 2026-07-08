@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfake_programmer=self.webpackChunkfake_programmer||[]).push([[1877],{1877:function(e,r,c){c.d(r,{createArchitectureServices:function(){return a.i}});var a=c(3653);c(9883)}}]);
