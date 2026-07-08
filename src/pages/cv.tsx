@@ -58,7 +58,7 @@ type WritingGroup = {
 };
 
 const CONTACT: ContactLink[] = [
-  { icon: FaLocationPin, label: "대구, 대한민국", href: "" },
+  { icon: FaLocationPin, label: "대한민국", href: "" },
   {
     icon: HiOutlineMail,
     label: "kbk2581553@gmail.com",
@@ -183,7 +183,7 @@ const ACTIVITIES: TimelineEntry[] = [
   {
     title: "임베디드소프트웨어공학연구실 (Software Testing LAB)",
     role: "학부연구생 — 이우진 교수",
-    period: "2024.01 – 2024.08",
+    period: "2024.01 – 2026.08",
     links: [
       { label: "연구실", href: "https://selab.knu.ac.kr/" },
       {
