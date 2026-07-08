@@ -2,7 +2,7 @@
 title: "KNU Online Judge"
 tags: ["Projects"]
 date: "2026-03-23"
-description: "교육용 Online Judge — 트래픽 피크 대응 EDA 전환 및 DB 성능 최적화"
+description: "교육용 Online Judge — RabbitMQ 비동기 채점, 레거시 데이터 통합, 월별 DB 파티셔닝"
 slug: "projects/judge"
 cover: "cover/projects/judge.png"
 draft: false
@@ -21,15 +21,60 @@ draft: false
 
 ### 프로젝트 소개
 
-- **개발 기간:** 2024.08 ~ 2026.08 (운영 중)
-- **역할:** 1인 개발 (학부 연구생 참여 후 시작)
-- **목표:** 교내 강의에서 사용하는 온라인 채점 시스템 — 코드 채점, 문제 제출, 성적 통계 제공
+| | |
+| --- | --- |
+| **개발 기간** | 2024.08 ~ 2026.08 (운영 중) |
+| **역할** | 1인 개발 (학부 연구생 참여 후 시작) |
+| **목표** | 교내 강의에서 사용하는 온라인 채점 시스템 — 코드 채점, 문제 제출, 성적 통계 제공 |
+
+교내 프로그래밍 강의에서 학생들이 코드를 제출하고 자동 채점 결과를 확인할 수 있는 Online Judge를 1인으로 개발·운영했다. 실습 마감 직전 집중되는 트래픽을 견디기 위해 채점 요청을 RabbitMQ로 분리하는 비동기 아키텍처로 전환했고, 기존 시스템 채점 데이터 통합 과정에서 늘어난 제출 이력은 월별 테이블 파티셔닝으로 관리했다.
+
+---
+
+## 작업 내용
+
+### 시스템 설계 · 아키텍처
+
+- **모놀리식 → EDA 전환** — 채점 요청 수신과 실행 로직을 분리해 API 서버 부하를 줄이고 Worker pool로 채점을 분산 처리
+- **채점 파이프라인 설계** — 제출 → 큐 적재 → Worker 실행 → 결과 저장 흐름 정의
+- **역할 분리** — 학생·교수/조교 사용자 유형에 맞춘 화면과 API 권한 구조 설계
+
+### 프론트엔드
+
+- **React SPA** — 문제 목록·상세, 코드 제출, 채점 결과·랭킹 조회 화면 구현
+- **제출 UX** — 코드 에디터 연동 및 제출 후 비동기 채점 상태 표시
+- **성적 통계** — 강의·문제별 제출 현황과 성적 집계 화면 제공
+
+### 백엔드 API
+
+- **Go API 서버** — 인증, 문제·제출·채점 결과 CRUD REST API 구현
+- **비동기 제출 처리** — 코드 제출 시 채점 Job을 RabbitMQ에 publish하고 즉시 `202 Accepted` 응답
+- **PostgreSQL** — MySQL과 비교 검토 후, 동시 제출·조회 워크로드에 맞춰 PostgreSQL 채택 ([동시성 비교 글](/post/computer/database/postgresql-mysql-concurrency) 참고)
+
+### 데이터베이스 · 파티셔닝
+
+- **도입 배경** — 기존 시스템의 채점 데이터를 신규 Online Judge로 통합하면서 제출·채점 테이블 row 수가 급증, 단일 테이블 조회·유지보수 부담 증가 ([PostgreSQL 파티셔닝 정리 글](/post/computer/database/postgresql-partitioning) 참고)
+- **월별 RANGE 파티셔닝** — `created_at` 기준으로 월 단위 파티션을 분할해 조회 범위를 물리적으로 제한
+- **레거시 데이터 이관** — 기간별로 데이터를 나눠 적재한 뒤 `ATTACH PARTITION`으로 파티션 테이블에 통합
+- **파티션 운영** — 학기별 조회 패턴에 맞춰 인덱스 설계, 오래된 월 파티션 분리·정리 절차 수립
+
+### 비동기 채점 (RabbitMQ)
+
+- **RabbitMQ 도입** — 피크 타임 API 다운 원인이었던 동기 채점 병목을 메시지 큐로 해소 ([Message Queue 정리 글](/post/computer/messaging/message-queue) 참고)
+- **Judge Worker** — 큐에서 Job을 consume해 샌드박스 실행·채점 후 결과를 DB에 저장하는 Worker 프로세스 구현
+- **Worker pool** — Worker 인스턴스를 수평 확장해 동시 채점 처리량 조절
+
+### 인프라 · 배포
+
+- **Docker** — API, Worker, RabbitMQ, PostgreSQL 컨테이너 구성
+- **GitHub Actions** — 빌드·배포 파이프라인 자동화
+- **운영 모니터링** — 큐 적재량·Worker 처리 상태를 확인해 피크 타임 대응
 
 ---
 
 ## 아키텍처
 
-운영 중 발생한 병목에 따라 아키텍처가 단계적으로 개선되었다. 아래는 현재 기준 전체 구조다.
+실습 마감 직전 집중되는 트래픽을 견디기 위해 API와 채점 실행을 분리했다. API는 요청을 큐에 넣고 빠르게 응답하며, Judge Worker가 비동기로 채점을 수행한다.
 
 <Mermaid chart={`flowchart TB
   subgraph clients [Clients]
@@ -50,15 +95,15 @@ draft: false
 
   subgraph data [Data Layer]
     PG[(PostgreSQL)]
-    PG_P1[Partition: 2024]
-    PG_P2[Partition: 2025]
-    PG_P3[Partition: 2026]
+    PG_P1["Partition: 2024-08"]
+    PG_P2["Partition: 2024-09"]
+    PG_P3["Partition: ..."]
   end
 
   Student --> Web
   Staff --> Web
   Web --> API
-  API -->|채점 요청 publish| MQ
+  API -->|"채점 요청 publish"| MQ
   MQ --> Worker1
   MQ --> Worker2
   Worker1 --> PG
@@ -68,38 +113,7 @@ draft: false
   PG --> PG_P2
   PG --> PG_P3`} />
 
----
-
-## 기술적 과제
-
-> 새로운 과제가 생기면 **Case N** 블록을 아래에 추가하고, [업데이트 로그](#업데이트-로그)에 날짜와 함께 기록하세요.
-
-<CaseStudy
-  id="case-1-rabbitmq-eda"
-  title="Case 1. RabbitMQ 기반 이벤트 기반 아키텍처(EDA) 전환"
-  problem={
-    <>
-      실습 마감 직전 집중되는 대규모 트래픽으로 모놀리식 구조의 API 서버가 다운되었다.
-      채점 요청과 실행 로직이 동기적으로 묶여 있어 피크 타임에 병목이 발생했다.
-    </>
-  }
-  action={
-    <>
-      RabbitMQ 메시지 큐를 도입하여 채점 요청 수신과 실제 실행 로직을 분리했다.
-      API는 요청을 큐에 publish하고, Judge Worker가 비동기로 소비하는 구조로 개편했다.
-    </>
-  }
-  application={
-    <>
-      채점 요청 → 큐 적재 → Worker pool 분산 처리 파이프라인을 구성했다.
-    </>
-  }
-  result={
-    <>
-      피크 타임 병목 현상을 제거했고, 120명 이상 동시 접속 상황에서도 무중단 운영을 달성했다.
-    </>
-  }
-/>
+채점 요청부터 결과 저장까지의 흐름은 아래와 같다.
 
 <Mermaid chart={`sequenceDiagram
   participant C as Client
@@ -114,37 +128,25 @@ draft: false
   W->>W: 샌드박스 실행 / 채점
   W->>A: 결과 저장`} />
 
-<CaseStudy
-  id="case-2-cursor-partitioning"
-  title="Case 2. Cursor 페이지네이션 및 수평 파티셔닝을 통한 성능 최적화"
-  problem={
-    <>
-      2년간 누적된 제출·채점 데이터로 인해 조회 API 응답이 3~4초까지 지연되었다.
-      OFFSET 기반 페이지네이션은 데이터가 커질수록 스캔 비용이 급증했다.
-    </>
-  }
-  action={
-    <>
-      OFFSET 대신 Cursor(keyset) 기반 페이지네이션으로 전환했다.
-      기간별 수평 파티셔닝을 적용하여 조회 범위를 물리적으로 분리했다.
-    </>
-  }
-  result={
-    <>
-      1,000회 테스트 기준 평균 응답 시간을 4초에서 0.5초로 단축했다 (약 87% 개선).
-    </>
-  }
-/>
-
 ---
 
-## 업데이트 로그
+## 설계 포인트
 
-| 날짜 | 추가 / 변경 |
-| --- | --- |
-| 2025-03 | Case 1 — RabbitMQ EDA 전환 |
-| 2026-03 | Case 2 — Cursor 페이지네이션 및 수평 파티셔닝 |
-| _예정_ | _새 Case 추가 시 이 표에 한 줄 추가_ |
+### 왜 PostgreSQL인가
+
+DBMS를 정할 때 MySQL과 PostgreSQL을 함께 검토했다. Online Judge의 채점 기록 테이블은 실습 마감 직전 **수십~백 명이 동시에 제출**하고, Worker가 결과를 쓰는 동안 학생·교수가 **채점 결과를 조회**하는 패턴이 반복된다.
+
+PostgreSQL은 MVCC 기반으로 일반 `SELECT`가 쓰기를 막지 않고, 쓰기도 읽기를 막지 않는다는 점이 공식 문서에 명시되어 있다. MySQL InnoDB도 MVCC를 쓰지만 기본 격리 수준(`REPEATABLE READ`)에서 gap/next-key lock이 범위 조회 시 걸릴 수 있어, 동시 제출·조회가 겹치는 워크로드에서는 PostgreSQL이 더 맞다고 판단했다.
+
+이 판단은 벤치마크가 아니라 공식 문서를 읽으며 내린 설계 선택에 가깝다. MVCC·격리 수준 비교와 한계는 [PostgreSQL vs MySQL — Online Judge를 위한 동시성 비교](/post/computer/database/postgresql-mysql-concurrency)에서 정리했다.
+
+### 왜 RabbitMQ인가
+
+채점은 **개별 Job 단위로 처리·완료**되는 작업 큐 패턴에 가깝다. 실습 마감 직전 수십~백 건의 제출이 짧은 시간에 몰리지만, 각 Job을 순서대로 또는 병렬로 처리하면 되는 구조다. RabbitMQ는 이런 **작업 큐(Work Queue)** 시나리오에 맞고, Kafka처럼 대규모 이벤트 스트림을 장기 보관·재생할 필요가 없는 Online Judge 운영 환경에 적합하다. MQ 개념과 RabbitMQ·Kafka 비교는 [Message Queue — Online Judge를 위한 RabbitMQ 선택](/post/computer/messaging/message-queue)에서 자세히 다룬다.
+
+### API는 빠르게, 채점은 비동기로
+
+학생이 코드를 제출하면 API는 채점 Job을 큐에 넣고 즉시 응답한다. 실제 컴파일·실행·채점은 Worker가 담당하므로, 제출 요청이 길게 블로킹되지 않는다. 피크 타임에 API 서버가 채점 실행에 묶여 다운되던 문제를 이 구조로 해소했다.
 
 ---
 

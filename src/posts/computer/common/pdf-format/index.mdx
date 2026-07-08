@@ -1,0 +1,211 @@
+---
+title: "PDF 파일 구조와 텍스트 추출"
+tags:
+  - Computer
+  - PDF
+date: 2024-01-20
+description: PDF 워터마크 제품 개발을 위해 파싱한 파일 구조, 객체 모델, 텍스트 스트림
+slug: computer/common/pdf-format
+---
+
+PDF 워터마크 제품 개발을 위해 **PDF 구조를 파싱하고 텍스트를 추출하는 도구**를 만들었다. 텍스트 인코딩·CMap 이슈는 [Codepage, 그리고 한글 인코딩](/post/computer/common/codepage)에서 다뤘고, 이 글은 **PDF 파일 포맷 자체**를 정리한다.
+
+---
+
+### PDF란 무엇인가
+
+PDF(Portable Document Format)는 Adobe가 만든 **문서 교환 포맷**이다. 내부는 바이너리 스트림이지만, 구조는 텍스트 기반 명령어와 객체 참조로 이뤄진다.
+
+핵심 특징:
+
+- **페이지 독립성**: 각 페이지가 자체 리소스(폰트·이미지)를 참조할 수 있다
+- **객체 지향**: 모든 데이터는 numbered object로 표현된다
+- **스트림 압축**: 본문은 FlateDecode 등으로 압축되는 경우가 많다
+
+---
+
+### 파일 레이아웃
+
+PDF 파일은 대략 다음 순서로 구성된다.
+
+```
+%PDF-1.7          ← 헤더 (버전)
+... 바디 (객체들) ...
+xref              ← 교차 참조 테이블
+trailer           ← 메타데이터 + /Root 참조
+%%EOF
+```
+
+| 영역 | 역할 |
+| --- | --- |
+| **Header** | PDF 버전 (`%PDF-1.x`) |
+| **Body** | 객체 정의 (`N 0 obj ... endobj`) |
+| **xref** | 각 객체의 파일 내 바이트 오프셋 |
+| **Trailer** | `/Size`, `/Root`, `/Info` 등 |
+| **/Root** | Catalog — 문서 진입점 |
+
+텍스트 추출기를 만들 때는 **xref → 객체 로드 → Catalog → Pages → Page → Contents** 순으로 따라간다.
+
+<Mermaid chart={`flowchart LR
+  Xref["xref"] --> Obj["객체 로드"]
+  Obj --> Cat["Catalog"]
+  Cat --> Pages["Pages"]
+  Pages --> Page["Page"]
+  Page --> Contents["Contents"]`} />
+
+<br />
+
+---
+
+### 객체 모델
+
+PDF의 모든 데이터는 **간접 객체**로 표현된다.
+
+```
+3 0 obj
+<< /Type /Page
+   /Parent 2 0 R
+   /MediaBox [0 0 612 792]
+   /Contents 4 0 R
+   /Resources << /Font << /F1 5 0 R >> >>
+>>
+endobj
+```
+
+| 표기 | 의미 |
+| --- | --- |
+| `3 0 obj` | 객체 번호 3, 세대 0 |
+| `2 0 R` | 객체 2를 참조 (Reference) |
+| `<< ... >>` | Dictionary |
+| `[ ... ]` | Array |
+
+#### 주요 객체 타입
+
+| Type | 설명 |
+| --- | --- |
+| `/Catalog` | 문서 루트, `/Pages` 참조 |
+| `/Pages` | 페이지 트리 (중간 노드) |
+| `/Page` | 단일 페이지, `/Contents`·`/Resources` |
+| `/Font` | 폰트 정의 (Type1, TrueType, Type0 등) |
+| stream | 실제 바이너리·텍스트 데이터 (`/Length`, `/Filter`) |
+
+---
+
+### 페이지 콘텐츠 스트림
+
+페이지에 그려지는 내용은 **content stream**에 PDF 연산자(operator)로 기록된다.
+
+```
+BT                          % Begin Text
+/F1 12 Tf                   % 폰트 F1, 크기 12
+100 700 Td                  % 텍스트 위치
+(Hello World) Tj            % 문자열 출력
+ET                          % End Text
+```
+
+#### 텍스트 출력 연산자
+
+| 연산자 | 설명 |
+| --- | --- |
+| `Tj`, `TJ` | 문자열·문자 배열 출력 |
+| `Tf` | 폰트·크기 설정 |
+| `Td`, `Tm` | 텍스트 위치·변환 행렬 |
+| `'` , `"` | 줄바꿈 + 출력 |
+
+텍스트 추출기는 이 연산자를 파싱해 **문자열·좌표·폰트**를 수집한다. 워터마크 삽입 시에는 기존 텍스트 위치를 파악해 겹치지 않게 배치하는 데 이 정보가 쓰인다.
+
+---
+
+### 폰트와 텍스트 인코딩
+
+PDF에서 텍스트는 폰트 종류에 따라 인코딩 방식이 달라진다.
+
+#### Simple font (Type1, TrueType)
+
+- `/Encoding` 또는 내장 encoding
+- `(Hello)`처럼 literal string으로 바로 읽히는 경우
+
+#### Composite font (Type0 — CIDFont)
+
+- 특히 **CJK(한중일)** 문서에서 흔함
+- 문자열이 **CID**(Character ID)로 표현됨
+- `/ToUnicode` CMap 또는 외부 **CMap** 리소스로 Unicode 매핑 필요
+
+```
+(<c0e4>) Tj    ← 16진 CID, CMap으로 '가' 등으로 변환
+```
+
+한글 PDF에서 텍스트가 깨질 때는 대부분 **CMap 선택 오류**다. 이 부분은 [Codepage 글](/post/computer/common/codepage)에서 실제 사례를 다뤘다.
+
+---
+
+### 스트림 디코딩
+
+content stream과 이미지는 종종 압축된다.
+
+```
+4 0 obj
+<< /Length 120 /Filter /FlateDecode >>
+stream
+... 바이너리 ...
+endstream
+endobj
+```
+
+파서 구현 시:
+
+1. `stream` ~ `endstream` 바이트 추출
+2. `/Filter` 체인 적용 (`/FlateDecode` → zlib, `/ASCIIHexDecode` 등)
+3. 디코딩된 바이트에서 PDF 연산자 파싱
+
+---
+
+### 텍스트 추출 파이프라인
+
+도구에서 구현한 흐름은 다음과 같다.
+
+<Mermaid chart={`flowchart TB
+  PDF["PDF 파일"]
+  XrefP["xref 파싱"]
+  Tree["Catalog / Page tree"]
+  Decode["Contents stream 디코딩"]
+  Op["operator 파싱"]
+  Font["폰트 / CMap 조회"]
+  Out["Unicode 텍스트 + 좌표"]
+  PDF --> XrefP --> Tree --> Decode --> Op --> Font --> Out`} />
+
+<br />
+
+#### 추출 결과 예시 (개념)
+
+| 텍스트 | x | y | 폰트 | 페이지 |
+| --- | --- | --- | --- | --- |
+| issued | 120.5 | 700.0 | F1 | 1 |
+| 보고서 | 72.0 | 680.0 | F2 | 1 |
+
+워터마크 제품 PoC에서는 이 좌표 정보를 이용해 **기존 텍스트와 겹치지 않는 위치**에 워터마크를 배치하는 데 활용했다.
+
+---
+
+### 구현 시 겪은 이슈
+
+- **xref가 손상되거나 stream xref**인 경우: linearized PDF, incremental update 처리 필요
+- **암호화된 PDF**: `/Encrypt` 객체가 있으면 먼저 복호화 키를 구해야 content stream 접근 가능
+- **Type0 폰트 + 잘못된 CMap**: 글자가 □□□ 또는 엉뚱한 문자로 나옴 → CMap 리소스 경로 추적
+- **Tm 행렬 누적**: 텍스트 위치는 여러 변환 연산자가 누적되므로 상태 머신으로 추적해야 함
+
+---
+
+### 요약
+
+- PDF는 **xref + 객체 트리** 구조이며, 페이지 내용은 **content stream의 연산자**로 표현된다
+- 텍스트 추출은 **stream 디코딩 → 연산자 파싱 → 폰트/CMap 매핑** 순이다
+- CJK 문서는 **CIDFont + CMap** 이해가 필수이며, 인코딩 세부는 [Codepage 글](/post/computer/common/codepage)을 참고
+
+---
+
+### Ref.
+
+- [PDF Reference — Adobe](https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf)
+- [Adobe CMap Resources](https://github.com/adobe-type-tools/cmap-resources)
+- [Codepage, 그리고 한글 인코딩](/post/computer/common/codepage)

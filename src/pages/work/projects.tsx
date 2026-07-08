@@ -3,7 +3,7 @@ import React from "react";
 import Tab from "../../layout/tab";
 import HorizontalCard from "../../components/common/horizontal-card";
 
-import { Container, VStack } from "@chakra-ui/react";
+import { Box, VStack } from "@chakra-ui/react";
 import { PageProps, graphql } from "gatsby";
 import { FormatDate } from "../../util/format";
 
@@ -42,7 +42,7 @@ const Projects: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
 
   return (
     <Tab tabName={"Projects"} description={"열심히 했어요"}>
-      <Container mt={"70px"} maxW={"1400px"} pb={"80px"}>
+      <Box w={"100%"} mt={"70px"}>
         <VStack spacing={4} align={"stretch"}>
           {displayList.map((post) => (
             <HorizontalCard
@@ -55,7 +55,7 @@ const Projects: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
             />
           ))}
         </VStack>
-      </Container>
+      </Box>
     </Tab>
   );
 };

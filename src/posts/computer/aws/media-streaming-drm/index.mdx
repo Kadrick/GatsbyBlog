@@ -1,0 +1,233 @@
+---
+title: "AWS로 Widevine DRM 스트리밍 파이프라인 구축하기"
+tags:
+  - AWS
+  - Media
+  - DRM
+date: 2023-12-15
+description: MediaConvert, MediaPackage, CloudFront, Lambda@Edge, 커스텀 라이선스 서버 연동 정리
+slug: computer/aws/media-streaming-drm
+---
+
+Markany에서 DRM 스트리밍 PoC를 진행하며 AWS 미디어 서비스 전반을 다뤘다. [MSE·EME 데모](/post/computer/media/mse-eme)로 브라우저 재생을 검증한 뒤, **인코딩·패키징·배포**까지 AWS로 옮긴 과정을 정리한다.
+
+| 파이프라인 | 목적 |
+| --- | --- |
+| **영상 입력·처리** | Signed URL 업로드 → Step Functions → MediaPackage **패키징·DRM**까지 |
+| **영상 송출** | MediaPackage Endpoint → CloudFront(Signed URL) → Lambda@Edge → 재생 |
+
+---
+
+### 영상 입력·처리 파이프라인
+
+원본 영상을 S3에 올린 뒤 **Step Functions**를 실행하면, `Lambda → MediaConvert → Lambda → MediaPackage` 순서로 진행된다. job 완료 대기는 Step Functions **Wait** state와 Lambda 폴링으로 처리하며, AWS 쪽 처리는 **MediaPackage 패키징**에서 마무리된다.
+
+<Mermaid chart={`%%{init: {"architecture": {"iconSize": 40, "idealEdgeLengthMultiplier": 1.1}}}%%
+architecture-beta
+  service client(aws:user)[Client]
+  service s3in(aws:simple-storage-service)[S3]
+  service sfn(aws:step-functions)[SFN]
+  service l1(aws:lambda-lambda-function)[Pre]
+  service mc(aws:elemental-mediaconvert)[MC]
+  service l2(aws:lambda-lambda-function)[Post]
+  service mp(aws:elemental-mediapackage)[MP]
+
+  client:R --> L:s3in
+  s3in:R --> L:sfn
+  sfn:B --> T:l1
+  l1:R --> L:mc
+  mc:R --> L:l2
+  l2:R --> L:mp
+
+  align row client s3in sfn
+  align row l1 mc l2 mp
+  align column sfn l1`} />
+
+---
+
+### Step Functions 상태 머신
+
+PoC 워크플로를 상태 머신으로 구현했다. MediaConvert는 **job 생성 요청만으로 끝나지 않으므로**, Step Functions **Wait** state(타이머)와 Lambda 폴링을 묶어 완료를 확인한다.
+
+<Mermaid chart={`%%{init: {"architecture": {"iconSize": 40, "idealEdgeLengthMultiplier": 1.1}}}%%
+architecture-beta
+  group wf(aws:step-functions)[SFN]
+  service lpre(aws:lambda-lambda-function)[LambdaPre] in wf
+  service mcsubmit(aws:elemental-mediaconvert)[CreateJob] in wf
+  service mcwait(aws:step-functions)[Wait] in wf
+  service poll(aws:lambda-lambda-function)[Poll] in wf
+  service lpost(aws:lambda-lambda-function)[LambdaPost] in wf
+  service mpingest(aws:elemental-mediapackage)[MPIngest] in wf
+  service failed(aws:step-functions)[Failed] in wf
+
+  lpre:R --> L:mcsubmit
+  mcsubmit:R --> L:mcwait
+  mcwait:R --> L:poll
+  poll:B --> T:mcwait
+  poll:R --> L:lpost
+  poll:B --> T:failed
+  lpost:R --> L:mpingest
+
+  align row lpre mcsubmit mcwait poll lpost mpingest`} />
+
+<br />
+
+| State | 동작 |
+| --- | --- |
+| **LambdaPre** | S3 입력 경로·job template으로 MediaConvert job 생성 |
+| **MCSubmit** | `CreateJob` API 호출 (비동기 — 즉시 반환) |
+| **MCWait** | Step Functions **Wait** state로 타이머 후 Lambda가 job 상태를 폴링. `COMPLETE` 전까지 Wait → Poll을 반복 |
+| **LambdaPost** | 출력 asset 경로 정리, MediaPackage ingest 파라미터 조립 |
+| **MPIngest** | MediaPackage에 asset ingest → HLS·DASH·DRM 패키징 |
+| **Failed** | `ERROR`·타임아웃 시 종료 |
+
+처음에는 **MCSubmit 직후 바로 LambdaPost**로 넘겨, 인코딩이 끝나기 전에 ingest가 실행되는 문제가 있었다.
+
+---
+
+### 영상 송출 파이프라인
+
+패키징이 끝난 콘텐츠는 **MediaPackage Endpoint**를 CloudFront 오리진으로 연결해 배포한다.
+
+<Mermaid chart={`%%{init: {"architecture": {"iconSize": 40, "idealEdgeLengthMultiplier": 1.1}}}%%
+architecture-beta
+  service mp(aws:elemental-mediapackage)[MP]
+  service cf(aws:cloudfront)[CF]
+  service edge(aws:lambda-lambda-function)["Lambda@Edge"]
+  service player(aws:user)[Player]
+
+  mp:R --> L:cf
+  cf:R --> L:edge
+  edge:R --> L:player
+
+  align row mp cf edge player`} />
+
+플레이어의 EME·라이선스 challenge 흐름은 [MSE·EME 글](/post/computer/media/mse-eme)에서 다룬다.
+
+---
+
+### S3
+
+#### 기능
+
+원본 영상과 처리 결과를 저장한다. 업로드와 서비스 간 접근은 **IAM**으로 통제한다.
+
+#### PoC에서 한 일
+
+- **Signed URL 업로드**: 클라이언트가 원본을 버킷에 올릴 때 사전 서명 URL을 발급했다. 버킷을 공개하지 않고도 안전하게 인입할 수 있다.
+- **IAM 연결**: MediaConvert·MediaPackage·Lambda 실행 역할에 S3 읽기·쓰기를 **버킷·prefix 단위**로 부여했다.
+- **입력·출력 prefix 분리**: Step Functions·MediaPackage ingest 경로와 맞추기 쉽게 나눴다.
+
+---
+
+### Lambda
+
+#### 기능
+
+Step Functions 안에서 **전처리·후처리**를 담당한다. DB에 작업 메타데이터를 기록하고, MediaConvert job 생성·완료 후 MediaPackage ingest를 트리거한다.
+
+| Lambda | 역할 |
+| --- | --- |
+| **전처리** | 입력 S3 URI·출력 경로·job template → `CreateJob` |
+| **후처리** | job 완료 확인, MediaPackage ingest 요청 |
+
+#### PoC에서 한 일
+
+- **Go 런타임**으로 작성했다.
+- **RDS**에 작업 상태·asset 메타데이터를 저장했다. Lambda를 **VPC**에 붙여 DB에 접근했다.
+- MediaConvert API 호출을 위해 **NAT Gateway**를 경유했다. VPC Lambda의 외부 API 문제는 [AWS Lambda에 VPC 설정하기](/post/computer/aws/lambda/vpc-setting)와 같은 맥락이다.
+
+---
+
+### MediaConvert
+
+#### 기능
+
+S3 원본을 **여러 해상도**로 트랜스코딩한다. manifest 생성은 하지 않는다 — **적응형 스트리밍용 다중 해상도 출력**이 핵심이다.
+
+#### PoC에서 한 일
+
+- Job template에 **1080p / 720p / 480p** 등 해상도별 출력을 고정했다.
+- 출력 그룹·S3 prefix를 MediaPackage ingest 경로와 **1:1로 맞췄다**.
+- 코덱 프로파일은 MSE `addSourceBuffer` codec string과 동일하게 유지했다.
+
+---
+
+### MediaPackage
+
+#### 기능
+
+MediaConvert 출력을 ingest해 **HLS·DASH 패키지**를 만든다. endpoint에 **DRM 적용 설정**을 연결하면 CENC 암호화 세그먼트와 manifest가 생성된다. AWS 처리 파이프라인은 여기서 끝난다.
+
+#### PoC에서 한 일
+
+- **HLS·DASH endpoint**를 구성해 manifest·세그먼트를 출력했다.
+- **DRM 설정**을 endpoint에 연결했다. 벤더 이름보다 **패키징 단계에서 콘텐츠 암호화를 적용**하는 것이 중심이었다.
+- DRM 설정 변경 후 CloudFront 캐시에 이전 manifest가 남을 수 있어 invalidation을 함께 고려했다.
+
+#### SPEKE · CPIX (패키징 시 키 교환)
+
+MediaPackage가 DRM 패키징을 할 때 **content encryption key**가 필요하다. DRM 설정의 키 제공 URL을 **자체 SPEKE 서버**(Lambda)로 연결했다.
+
+- AWS **SPEKE** 스펙을 따르되, 키·정책 표현을 위해 **CPIX를 확장한 형식**으로 응답을 설계해 보았다. CPIX는 멀티 DRM 키 정보를 XML로 교환하는 포맷이다.
+- SPEKE 요청·응답에 필요한 resource ID·key ID 필드를 CPIX 구조에 맞춰 채웠다.
+- MediaPackage DRM 설정과 서버 응답의 **key ID가 일치**해야 이후 재생 단계에서도 키가 맞는다.
+
+브라우저 EME가 `generateRequest`로 라이선스를 받는 흐름은 [MSE·EME 글](/post/computer/media/mse-eme)의 Widevine·라이선스 서버 절을 참고한다.
+
+---
+
+### CloudFront
+
+#### 기능
+
+**MediaPackage Endpoint**를 오리진으로 CDN 배포한다. **Signed URL**로 접근을 제한하고, **Lambda@Edge**로 manifest를 조작한다.
+
+#### PoC에서 한 일
+
+- **MediaPackage 연동**: endpoint를 CloudFront 오리진으로 연결했다.
+- **Signed URL 배포**: manifest·세그먼트 URL에 만료 시간이 있는 서명 URL을 붙였다.
+- **Lambda@Edge**: viewer request·origin response에서 manifest 본문·헤더를 수정했다. 세그먼트 URL·경로를 Signed URL 환경에 맞게 보정했다.
+- EME cross-origin fetch를 위해 **CORS** Response Headers Policy를 맞췄다.
+
+---
+
+### CloudFormation
+
+#### 기능
+
+위 컴포넌트를 **하나의 스택으로 묶는 IaC**다.
+
+#### PoC에서 한 일
+
+- 콘솔 설정을 **YAML 템플릿으로 옮기는 데 시간이 많이 걸렸다**. MediaPackage DRM·endpoint, CloudFront Signed URL key group, Step Functions 정의처럼 **중첩 JSON·ARN 참조**가 많은 리소스가 특히 까다로웠다.
+- DRM URL·key pair ID 등은 **Parameter**로 분리했다.
+
+---
+
+### 관련 글
+
+- [MSE와 EME — 브라우저에서 암호화 미디어 재생하기](/post/computer/media/mse-eme)
+- [HLS와 DASH — 적응형 스트리밍 포맷 이해하기](/post/computer/media/hls-dash)
+- [AWS Lambda에 VPC 설정하기](/post/computer/aws/lambda/vpc-setting)
+
+---
+
+### 요약
+
+- **입력·처리**: S3(Signed URL) → Step Functions(Wait+Lambda Poll) → Lambda → MediaConvert → Lambda → **MediaPackage(패키징·DRM·SPEKE)**
+- **송출**: MediaPackage Endpoint → CloudFront(Signed URL) → Lambda@Edge → EME Player
+- **Step Functions**: MediaConvert `CreateJob` 직후 넘기면 ingest 실패 → **MCWait** state 필수
+- **CloudFormation**: 전체를 YAML로 옮기는 IaC
+
+---
+
+### Ref.
+
+- [AWS MediaConvert](https://docs.aws.amazon.com/mediaconvert/)
+- [AWS MediaPackage](https://docs.aws.amazon.com/mediapackage/)
+- [AWS Step Functions](https://docs.aws.amazon.com/step-functions/)
+- [SPEKE Specification](https://docs.aws.amazon.com/speke/latest/documentation/what-is-speke.html)
+- [DASH-IF CPIX](https://dashif.org/guidelines/cpix/)
+- [CloudFront Signed URLs](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-signed-urls.html)
+- [CloudFront Lambda@Edge](https://docs.aws.amazon.com/lambda/latest/dg/lambda-edge.html)

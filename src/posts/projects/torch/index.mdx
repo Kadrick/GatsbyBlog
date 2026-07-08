@@ -1,7 +1,7 @@
 ---
 title: "AI 기반 프로젝트 자동 문서화 도구"
 tags: ["Projects"]
-date: "2025-08-30"
+date: "2025-07-31"
 description: "VS Code Extension — Gemini 기반 코드 분석·문서화 및 Marketplace 배포"
 slug: "projects/torch"
 cover: "cover/projects/hobanwoo.png"
@@ -21,9 +21,61 @@ draft: false
 
 ### 프로젝트 소개
 
-- **개발 기간:** 2025.03 ~ 2025.07
-- **역할:** 팀장 (캡스톤 프로젝트)
-- **목표:** 개발 과정에서 가장 병목인 코드·구조 분석 단계를 자동화하는 VS Code Extension 개발
+| | |
+| --- | --- |
+| **개발 기간** | 2025.03 ~ 2025.07 |
+| **역할** | 팀장 (캡스톤 프로젝트) |
+| **목표** | 개발 과정에서 가장 병목인 코드·구조 분석 단계를 자동화하는 VS Code Extension 개발 |
+
+Extension, Backend, AI 연동 파트로 나뉜 팀에서 팀장을 맡아 VS Code Extension을 기획·개발하고, Gemini API 기반 코드 분석·문서화 백엔드를 연동한 뒤 VS Code Marketplace에 배포했다.
+
+---
+
+## 실행 화면
+
+> 아래 이미지는 `src/posts/projects/torch/` 폴더에 같은 파일명으로 추가하면 표시됩니다.
+
+### Extension 메인
+
+![VS Code Extension 메인 화면](./screenshot-extension.png)
+
+### 코드 분석 · 문서화 결과
+
+![Webview 분석 결과 화면](./screenshot-webview.png)
+
+### VS Code Marketplace
+
+![Marketplace 배포 페이지](./screenshot-marketplace.png)
+
+---
+
+## 작업 내용
+
+### 팀 운영 · 일정 관리
+
+- **마일스톤 설계** — Extension, Backend, AI 연동 파트별 역량에 맞춰 통합 일정을 수립
+- **주간 정기 회의** — 파트 간 기술적 블로커를 즉시 해소하고 진행 상황을 공유
+- **인터페이스 사전 합의** — API 스펙·Webview 메시지 프로토콜을 초기에 고정해 병렬 개발이 가능하도록 조율
+- **산학협력 경진대회** — 정시 배포를 완료하고 우수상 수상
+
+### VS Code Extension · Webview
+
+- **Extension Host 개발** — 워크스페이스 코드 컨텍스트 수집 및 분석 요청 흐름 구현
+- **React Webview UI** — 분석 요청·결과 표시를 위한 Webview 화면 구성
+- **3-tier 통신 구조** — Webview ↔ Extension Host ↔ FastAPI REST API 연동
+
+### 백엔드 · AI 연동
+
+- **FastAPI 서버 구축** — 분석 요청 수신·응답 API 및 분석 이력 저장
+- **Gemini API 연동** — 코드 컨텍스트를 전달하고 문서화 결과를 반환하는 AI 파이프라인 구성
+- **RabbitMQ 비동기 처리** — 분석 요청 병목을 줄이기 위해 큐 기반 Worker 처리 도입
+- **PostgreSQL** — 분석 요청·결과 이력 관리
+
+### 배포 · 릴리즈
+
+- **VSIX 패키징** — VSIX Build Tool로 Extension 빌드·패키징 자동화
+- **CI/CD** — GitHub Actions로 백엔드 배포 파이프라인 구성
+- **Marketplace 배포** — VS Code Marketplace 공식 배포 절차 완료
 
 ---
 
@@ -55,61 +107,7 @@ draft: false
   Worker --> DB
   Ext -->|VSIX| Market`} />
 
----
-
-## 기술적 과제
-
-> 새로운 과제가 생기면 **Case N** 블록을 아래에 추가하고, [업데이트 로그](#업데이트-로그)에 날짜와 함께 기록하세요.
-
-<CaseStudy
-  id="case-1-agile-management"
-  title="Case 1. 팀장으로서의 애자일 협업 매니징 및 일정 최적화"
-  problem={
-    <>
-      파트별 역량 편차와 요구 기술의 차이로 통합 단계 일정 지연 리스크가 있었다.
-      Extension, Backend, AI 연동 파트 간 의존성이 높아 블로커가 누적될 수 있었다.
-    </>
-  }
-  action={
-    <>
-      팀원 역량별 마일스톤을 설계하고, 주간 정기 회의에서 기술적 블로커를 즉시 해소했다.
-      파트 간 인터페이스(API 스펙, Webview 메시지 프로토콜)를 초기에 고정하여 병렬 개발을 가능하게 했다.
-    </>
-  }
-  result={
-    <>
-      기술 통합 병목을 제거하고 정시 배포를 완료했으며, 산학협력 프로젝트 경진대회 우수상을 수상했다.
-    </>
-  }
-/>
-
-<CaseStudy
-  id="case-2-vsix-fastapi"
-  title="Case 2. VSIX 빌드 툴을 활용한 FastAPI 백엔드 통합 및 마켓플레이스 배포"
-  problem={
-    <>
-      VS Code Webview 환경과 Python 기반 AI 백엔드 서버 간 연동 구조가 복잡했다.
-      Extension 패키징·배포 파이프라인이 없어 프로덕트 릴리즈까지의 경로가 불명확했다.
-    </>
-  }
-  action={
-    <>
-      VSIX Build Tool로 Extension 패키징을 최적화하고, FastAPI 백엔드를 CI/CD(GitHub Actions)로 연동했다.
-      VS Code Marketplace 공식 배포 절차를 완료했다.
-    </>
-  }
-  application={
-    <>
-      Webview ↔ Extension Host ↔ FastAPI REST API 3-tier 통신 구조를 구성했다.
-      분석 요청 병목 방지를 위해 RabbitMQ 기반 비동기 처리도 함께 도입했다.
-    </>
-  }
-  result={
-    <>
-      글로벌 VS Code Marketplace에 실제 프로덕트를 릴리즈하는 경험을 확보했다.
-    </>
-  }
-/>
+분석 요청부터 결과 표시까지의 흐름은 아래와 같다.
 
 <Mermaid chart={`sequenceDiagram
   participant U as Developer
@@ -125,16 +123,6 @@ draft: false
   G-->>A: 분석 결과
   A-->>W: 문서화 응답
   W-->>U: 결과 표시`} />
-
----
-
-## 업데이트 로그
-
-| 날짜 | 추가 / 변경 |
-| --- | --- |
-| 2025-07 | Case 1 — 애자일 협업 및 일정 최적화 |
-| 2025-07 | Case 2 — VSIX + FastAPI 통합 및 Marketplace 배포 |
-| _예정_ | _새 Case 추가 시 이 표에 한 줄 추가_ |
 
 ---
 

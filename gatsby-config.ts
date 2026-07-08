@@ -96,7 +96,6 @@ const config: GatsbyConfig = {
         trackingIds: ["G-PB8DY4KE86"],
       },
     },
-    "gatsby-plugin-sitemap",
     {
       resolve: "gatsby-plugin-robots-txt",
       options: {

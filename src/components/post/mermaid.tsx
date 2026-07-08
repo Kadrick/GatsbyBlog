@@ -1,10 +1,13 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { Box } from "@chakra-ui/react";
+import awsIconsPack from "../../data/aws-icons-mermaid.json";
 
 type MermaidProps = {
   children?: React.ReactNode;
   chart?: string;
 };
+
+let mermaidInitialized = false;
 
 const toChartText = (value: React.ReactNode): string => {
   if (typeof value === "string") return value;
@@ -31,24 +34,53 @@ const Mermaid: React.FC<MermaidProps> = ({ children, chart }) => {
 
     const render = async () => {
       const mermaid = (await import("mermaid")).default;
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: "base",
-        securityLevel: "loose",
-        fontFamily: "Pretendard-Regular, Inter, sans-serif",
-      });
+
+      if (!mermaidInitialized) {
+        mermaid.registerIconPacks([
+          {
+            name: "aws",
+            icons: awsIconsPack,
+          },
+        ]);
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "base",
+          securityLevel: "loose",
+          fontFamily: "Pretendard-Regular, Inter, sans-serif",
+          themeVariables: {
+            archEdgeColor: "#232F3E",
+            archEdgeArrowColor: "#232F3E",
+            archGroupBorderColor: "#7D8998",
+            fontSize: "13px",
+          },
+          flowchart: {
+            rankSpacing: 28,
+            nodeSpacing: 20,
+            padding: 12,
+          },
+          architecture: {
+            iconSize: 48,
+            idealEdgeLengthMultiplier: 1.8,
+          },
+        });
+        mermaidInitialized = true;
+      }
 
       if (cancelled || !containerRef.current) return;
 
       const { svg } = await mermaid.render(`mermaid-${chartId}`, chartText);
-      containerRef.current.innerHTML = svg;
+      if (!cancelled && containerRef.current) {
+        containerRef.current.innerHTML = svg;
+      }
     };
 
     render().catch((error) => {
       if (!cancelled && containerRef.current) {
+        const message =
+          error instanceof Error ? error.message : "알 수 없는 오류";
         containerRef.current.textContent =
-          "Mermaid 차트를 렌더링하지 못했습니다.";
-        console.error(error);
+          `Mermaid 차트를 렌더링하지 못했습니다. (${message})`;
+        console.error("Mermaid render error:", error);
       }
     });
 
@@ -59,14 +91,21 @@ const Mermaid: React.FC<MermaidProps> = ({ children, chart }) => {
 
   return (
     <Box
-      my={6}
-      p={4}
+      p={3}
       borderRadius={"md"}
       borderWidth={"1px"}
       borderColor={"gray.200"}
       bg={"white"}
+      maxW={"100%"}
       overflowX={"auto"}
       ref={containerRef}
+      sx={{
+        "& svg": {
+          display: "block",
+          width: "100%",
+          height: "auto",
+        },
+      }}
     />
   );
 };

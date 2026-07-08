@@ -2,7 +2,7 @@ import React from "react";
 
 import Tab from "../../layout/tab";
 
-import { Box, Container, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { Link, PageProps, graphql } from "gatsby";
 import { FormatDate } from "../../util/format";
 
@@ -18,35 +18,126 @@ type Info = {
   title: string;
   slug: string;
   date: string;
+  sortDate: string;
 };
 
 const Errors: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
-  let displayList: Info[] = [];
+  const displayTarget = new Map<number, Info[]>();
 
-  data.allMdx.edges.map((post, _) => {
-    const d = FormatDate(new Date(post.node.frontmatter?.date || ""));
+  data.allMdx.edges.forEach((post) => {
+    const dateString = post.node.frontmatter?.date as string;
 
-    displayList.push({
+    if (!dateString) {
+      const info = {
+        title: post.node.frontmatter?.title || "",
+        date: "",
+        slug: post.node.frontmatter?.slug || "",
+        sortDate: "",
+      };
+
+      if (!displayTarget.has(0)) {
+        displayTarget.set(0, []);
+      }
+
+      displayTarget.get(0)?.push(info);
+      return;
+    }
+
+    const postDate = new Date(dateString);
+    const year = postDate.getFullYear();
+
+    if (!displayTarget.has(year)) {
+      displayTarget.set(year, []);
+    }
+
+    displayTarget.get(year)?.push({
       title: post.node.frontmatter?.title || "",
+      date: FormatDate(postDate),
       slug: post.node.frontmatter?.slug || "",
-      date: d,
+      sortDate: dateString,
     });
+  });
+
+  displayTarget.forEach((posts, year) => {
+    if (year === 0) return;
+
+    posts.sort(
+      (a, b) =>
+        new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
+    );
   });
 
   return (
     <Tab tabName={"Errors"} description={"외않되"}>
-      <Container mt={"70px"}>
-        {displayList.map((post, idx) => (
-          <Box mt={"20px"} key={idx}>
-            <Link to={"/post/" + post.slug}>
-              <Flex justifyContent={"space-between"}>
-                <Text size={"17px"}>{post.title}</Text>
-                <Text>{post.date}</Text>
-              </Flex>
-            </Link>
+      <Box w={"100%"} mt={"70px"}>
+        {[...displayTarget.entries()]
+          .sort((a, b) => b[0] - a[0])
+          .map((yearSet) => {
+            if (yearSet[0] === 0) return null;
+
+            return (
+              <Box key={yearSet[0]} mb={"48px"}>
+                <Heading size={"md"} mb={"16px"} textAlign={"left"}>
+                  {yearSet[0]}
+                </Heading>
+                {yearSet[1].map((info) => (
+                  <Box mt={"12px"} key={info.slug}>
+                    <Link
+                      to={"/post/" + info.slug}
+                      style={{ display: "block", width: "100%" }}
+                    >
+                      <Flex
+                        w={"100%"}
+                        alignItems={"flex-start"}
+                        justifyContent={"space-between"}
+                        gap={4}
+                      >
+                        <Text
+                          flex={1}
+                          minW={0}
+                          fontSize={"17px"}
+                          textAlign={"left"}
+                          lineHeight={"1.5"}
+                        >
+                          {info.title}
+                        </Text>
+                        <Text
+                          flexShrink={0}
+                          whiteSpace={"nowrap"}
+                          color={"gray.500"}
+                          fontSize={"sm"}
+                          pt={"2px"}
+                        >
+                          {info.date}
+                        </Text>
+                      </Flex>
+                    </Link>
+                  </Box>
+                ))}
+              </Box>
+            );
+          })}
+
+        {displayTarget.has(0) && (
+          <Box w={"100%"}>
+            <Heading size={"md"} mb={"16px"} textAlign={"left"}>
+              Unknown
+            </Heading>
+            {displayTarget.get(0)?.map((info) => (
+              <Box mt={"12px"} key={info.slug}>
+                <Link
+                  to={"/post/" + info.slug}
+                  style={{ display: "block", width: "100%" }}
+                >
+                  <Text fontSize={"17px"} textAlign={"left"} lineHeight={"1.5"}>
+                    {info.title}
+                  </Text>
+                </Link>
+              </Box>
+            ))}
           </Box>
-        ))}
-      </Container>
+        )}
+      </Box>
     </Tab>
   );
 };

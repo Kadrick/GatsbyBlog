@@ -25,7 +25,7 @@ const ButtonWithIcon: React.FC<ButtonProps> = ({ icon, link, text }) => {
 
 const Header: React.FC<{}> = () => {
   return (
-    <Center w={"100vw"} h={"50px"}>
+    <Center w={"100%"} h={"50px"}>
       <ButtonWithIcon icon={FiHome} text={"Home"} link={"/"} />
       <ButtonWithIcon icon={LuUser2} text={"CV"} link={"/cv"} />
       <ButtonWithIcon icon={FiCode} text={"Works"} link={"/works"} />

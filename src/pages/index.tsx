@@ -31,7 +31,7 @@ const IndexPage: React.FC<PageProps> = () => {
         url={"/"}
       />
       <VStack
-        w={"100vw"}
+        w={"100%"}
         minH={"calc(100vh - 150px)"}
         justifyContent={"center"}
       >

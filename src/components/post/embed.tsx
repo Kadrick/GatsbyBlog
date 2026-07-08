@@ -8,7 +8,6 @@ import {
   CardBody,
   Center,
   VStack,
-  Heading,
 } from "@chakra-ui/react";
 import { Spotify } from "react-spotify-embed";
 import axios from "axios";
@@ -90,9 +89,9 @@ const Embed: React.FC<EmbedProps> = ({ type, link }) => {
             <Link href={link} target={"_blank"}>
               <Card direction={"row"} align={"center"}>
                 <CardBody w={"70%"} justifyContent={"center"}>
-                  <Heading size={"sm"} maxH={"80px"}>
+                  <Text fontSize={"sm"} fontWeight={"semibold"} maxH={"80px"}>
                     {metaData.title}
-                  </Heading>
+                  </Text>
 
                   {metaData.description && (
                     <Box>

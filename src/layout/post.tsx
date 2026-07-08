@@ -7,6 +7,7 @@ import PostToc from "../components/post/post-toc";
 import "@code-hike/mdx/dist/index.css";
 import {
   Box,
+  Container,
   Flex,
   Heading,
   VStack,
@@ -16,6 +17,41 @@ import {
   Tag,
 } from "@chakra-ui/react";
 import Seo from "./seo";
+
+const postContentSx = {
+  overflowWrap: "break-word",
+  wordBreak: "break-word",
+  "& h2, & h3, & h4": {
+    scrollMarginTop: "90px",
+  },
+  "& img": {
+    display: "block",
+    maxWidth: "100%",
+    height: "auto",
+    my: 6,
+    mx: "auto",
+  },
+  "& svg": {
+    display: "block",
+    maxWidth: "100%",
+    height: "auto",
+    my: 6,
+    mx: "auto",
+  },
+  "& pre": {
+    maxWidth: "100%",
+    overflowX: "auto",
+  },
+  "& .ch-codeblock, & .ch-codegroup": {
+    maxWidth: "100%",
+    overflowX: "auto",
+  },
+  "& table": {
+    display: "block",
+    maxWidth: "100%",
+    overflowX: "auto",
+  },
+};
 
 const Post: React.FC<
   PageProps<{
@@ -64,7 +100,13 @@ const Post: React.FC<
         }
         description={data.mdx.frontmatter.description || ""}
       />
-      <Box pt={"50px"} width={{ base: "92vw", lg: "80vw" }} maxW={"1100px"}>
+      <Container
+        maxW={"1100px"}
+        w={"100%"}
+        px={{ base: 4, md: 6, lg: 8 }}
+        pt={"50px"}
+        pb={"80px"}
+      >
         <Heading>{data.mdx.frontmatter.title}</Heading>
         {data.mdx.frontmatter.description && (
           <Text mt={"5px"} color={"gray"}>
@@ -88,41 +130,26 @@ const Post: React.FC<
             ))}
           </Wrap>
         )}
-      </Box>
-      <Flex
-        mt={"50px"}
-        width={{ base: "92vw", lg: "80vw" }}
-        maxW={"1100px"}
-        gap={{ base: 0, xl: 10 }}
-        align={"flex-start"}
-      >
-        <Box
-          flex={1}
-          minW={0}
-          ref={contentRef}
-          sx={{
-            "& h2, & h3, & h4, & section[id]": {
-              scrollMarginTop: "90px",
-            },
-            "& svg": {
-              display: "block",
-              maxWidth: "100%",
-              height: "auto",
-              my: 6,
-              mx: "auto",
-            },
-          }}
+
+        <Flex
+          mt={"50px"}
+          w={"100%"}
+          gap={{ base: 0, xl: 8 }}
+          align={"flex-start"}
         >
-          <MDXProvider components={MdxComponents}>{children}</MDXProvider>
-        </Box>
-        <Box
-          display={{ base: "none", lg: "block" }}
-          w={"200px"}
-          flexShrink={0}
-        >
-          <PostToc contentRef={contentRef} />
-        </Box>
-      </Flex>
+          <Box flex={1} minW={0} ref={contentRef} sx={postContentSx}>
+            <MDXProvider components={MdxComponents}>{children}</MDXProvider>
+          </Box>
+          <Box
+            display={{ base: "none", xl: "block" }}
+            w={"200px"}
+            flexShrink={0}
+            minW={0}
+          >
+            <PostToc contentRef={contentRef} />
+          </Box>
+        </Flex>
+      </Container>
     </Basic>
   );
 };

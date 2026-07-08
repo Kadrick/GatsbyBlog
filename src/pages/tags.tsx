@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, PageProps, graphql } from "gatsby";
 
 import Tab from "../layout/tab";
@@ -12,7 +12,6 @@ import {
   Flex,
   Tag,
   TagLabel,
-  TagRightIcon,
   TagLeftIcon,
   Divider,
 } from "@chakra-ui/react";
@@ -28,74 +27,68 @@ type AllMDXQuery = {
 };
 
 type Post = {
-  title?: string;
-  slug?: string;
-  date?: string;
+  title: string;
+  slug: string;
+  date: string;
+  sortDate: string;
 };
 
 const Tags: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
-  const [tagMap, setTagMap] = useState<Map<string, Post[]>>(
-    new Map<string, Post[]>()
-  );
-
-  useEffect(() => {
+  const tagMap = useMemo(() => {
     const newMap = new Map<string, Post[]>();
 
     for (const post of data.allMdx.edges) {
-      const dateString = post.node.frontmatter?.date as string;
+      const dateString = (post.node.frontmatter?.date as string) || "";
+      const dateFormat = dateString ? FormatDate(new Date(dateString)) : "";
+      const info: Post = {
+        title: post.node.frontmatter?.title || "",
+        slug: post.node.frontmatter?.slug || "",
+        date: dateFormat,
+        sortDate: dateString,
+      };
 
-      let dateFormat = "";
-      if (dateString !== "") {
-        const postDate = new Date(dateString);
-        // prettier-ignore
-        dateFormat = FormatDate(postDate);
-      }
+      const tags = post.node.frontmatter?.tags?.filter(Boolean) as
+        | string[]
+        | undefined;
 
-      if ((post.node.frontmatter?.tags?.length || 0) > 0) {
-        for (const tag of post.node.frontmatter?.tags || []) {
-          if (tag === null) continue;
-
+      if (tags && tags.length > 0) {
+        for (const tag of tags) {
           if (!newMap.has(tag)) {
             newMap.set(tag, []);
           }
-
-          const arr = newMap.get(tag);
-          arr?.push({
-            title: post.node.frontmatter?.title || "",
-            slug: post.node.frontmatter?.slug || "",
-            date: dateFormat,
-          });
+          newMap.get(tag)?.push(info);
         }
       } else {
         if (!newMap.has("No Tags")) {
           newMap.set("No Tags", []);
         }
-
-        const arr = newMap.get("No Tags");
-        arr?.push({
-          title: post.node.frontmatter?.title || "",
-          slug: post.node.frontmatter?.slug || "",
-          date: dateFormat,
-        });
+        newMap.get("No Tags")?.push(info);
       }
     }
 
-    setTagMap(newMap);
-  }, []);
+    newMap.forEach((posts) => {
+      posts.sort(
+        (a, b) =>
+          new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime(),
+      );
+    });
+
+    return newMap;
+  }, [data.allMdx.edges]);
 
   const [selectedTag, setSelectedTag] = useState<string>("");
 
   return (
     <Tab tabName={"Tags"} description={""}>
-      <Box mt={"70px"}>
+      <Box w={"100%"} mt={"70px"}>
         <Wrap>
-          {[...tagMap.keys()].map((value, key) => (
-            <WrapItem key={key} onClick={() => setSelectedTag(value)}>
+          {[...tagMap.keys()].map((value) => (
+            <WrapItem key={value} onClick={() => setSelectedTag(value)}>
               <Tag
                 size={"lg"}
-                key={key}
                 variant={value === selectedTag ? "solid" : "outline"}
                 colorScheme={"red"}
+                cursor={"pointer"}
               >
                 <TagLeftIcon as={HiHashtag} />
                 <TagLabel ml={"-4px"}>{value}</TagLabel>
@@ -106,19 +99,48 @@ const Tags: React.FC<PageProps<AllMDXQuery>> = ({ data }) => {
             </WrapItem>
           ))}
         </Wrap>
-      </Box>
-      <Divider mt={"20px"} borderWidth={"2px"} borderColor={"red"} />
-      <Box w={"100%"}>
-        {tagMap.get(selectedTag)?.map((post, idx) => (
-          <Box mt={"20px"} key={idx}>
-            <Link to={"/post/" + post.slug}>
-              <Flex justifyContent={"space-between"}>
-                <Text size={"17px"}>{post.title}</Text>
-                <Text>{post.date}</Text>
-              </Flex>
-            </Link>
-          </Box>
-        ))}
+
+        {selectedTag && (
+          <>
+            <Divider mt={"20px"} borderWidth={"2px"} borderColor={"red"} />
+            <Box w={"100%"} mt={"20px"}>
+              {tagMap.get(selectedTag)?.map((post) => (
+                <Box mt={"12px"} key={post.slug}>
+                  <Link
+                    to={"/post/" + post.slug}
+                    style={{ display: "block", width: "100%" }}
+                  >
+                    <Flex
+                      w={"100%"}
+                      alignItems={"flex-start"}
+                      justifyContent={"space-between"}
+                      gap={4}
+                    >
+                      <Text
+                        flex={1}
+                        minW={0}
+                        fontSize={"17px"}
+                        textAlign={"left"}
+                        lineHeight={"1.5"}
+                      >
+                        {post.title}
+                      </Text>
+                      <Text
+                        flexShrink={0}
+                        whiteSpace={"nowrap"}
+                        color={"gray.500"}
+                        fontSize={"sm"}
+                        pt={"2px"}
+                      >
+                        {post.date}
+                      </Text>
+                    </Flex>
+                  </Link>
+                </Box>
+              ))}
+            </Box>
+          </>
+        )}
       </Box>
     </Tab>
   );
@@ -128,7 +150,10 @@ export default Tags;
 
 export const query = graphql`
   {
-    allMdx(sort: { frontmatter: { date: DESC } }) {
+    allMdx(
+      sort: { frontmatter: { date: DESC } }
+      filter: { frontmatter: { draft: { ne: true } } }
+    ) {
       edges {
         node {
           frontmatter {

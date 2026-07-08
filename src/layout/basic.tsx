@@ -20,7 +20,7 @@ type LayoutProps = {
 
 const Basic: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <Box w={"100vw"}>
+    <Box w={"100%"} overflowX={"hidden"}>
       <Header />
       <motion.div
         initial="hidden"
@@ -28,9 +28,14 @@ const Basic: React.FC<LayoutProps> = ({ children }) => {
         exit="exit"
         variants={variants}
         transition={{ duration: 0.4, type: "easeInOut" }}
-        style={{ width: "100vw" }}
+        style={{ width: "100%" }}
       >
-        <Container minH={"calc(100vh - 150px)"} centerContent maxWidth={"none"}>
+        <Container
+          minH={"calc(100vh - 150px)"}
+          centerContent
+          maxW={"100%"}
+          px={0}
+        >
           {children}
         </Container>
       </motion.div>

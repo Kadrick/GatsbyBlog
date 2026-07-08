@@ -4,7 +4,7 @@ import { Center, Link, Text } from "@chakra-ui/react";
 
 const Footer: React.FC<{}> = () => {
   return (
-    <Center w={"100vw"} h={"100px"}>
+    <Center w={"100%"} h={"100px"}>
       <Text color={"gray"} fontSize={"15px"} textAlign={"center"}>
         Inspired by{" "}
         <Link

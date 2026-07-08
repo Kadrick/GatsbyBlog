@@ -1,8 +1,8 @@
 ---
 title: "Markany"
 tags: ["Experience"]
-date: "2024-08-01"
-description: "Widevine DRM 기반 프리미엄 콘텐츠 보호와 CloudFormation IaC 자동화"
+date: "2025-01-15"
+description: "미디어 워터마크 CMS, Widevine DRM 스트리밍 PoC, PDF 텍스트 추출 도구"
 slug: "experience/markany"
 cover: "works/projects.png"
 draft: false
@@ -10,97 +10,124 @@ draft: false
 
 ## 개요
 
-- **역할:** 산업기능요원 — 미디어 스트리밍 및 인프라 자동화
+- **역할:** 산업기능요원 — 미디어 보안 및 스트리밍 인프라
 - **기간:** 2022.04 ~ 2024.08
 
-Widevine DRM 기반 프리미엄 콘텐츠 보호와 CloudFormation IaC 자동화를 담당했다.
+미디어·문서 콘텐츠 보안 제품군에서 아래 세 가지 업무를 맡았다.
+
+| 업무 | 내용 |
+| --- | --- |
+| 워터마크 CMS | 상용 제품 유지보수 · Vue → React 전환 · 신규 구축 |
+| DRM 스트리밍 PoC | Widevine + HLS/DASH end-to-end 검증 |
+| PDF 텍스트 추출 | PDF 워터마크 제품 PoC용 파서·추출기 개발 |
+
+각 업무는 **배경 · 담당 · 핵심 구현 · 결과** 순으로 정리했다.
 
 ---
 
-## 아키텍처
+## 업무
+
+### 워터마크 CMS 제품
+
+#### 배경
+
+미디어 워터마크 삽입·관리는 회사가 고객에게 제공하는 **상용 제품**이었다. 고객 요구에 맞춰 기능을 확장하고 운영 안정성을 유지해야 했고, 기존 Vue 기반 프론트엔드와 함께 AWS 위 신규 아키텍처로의 전환·구축이 필요했다.
+
+#### 담당
+
+- 기존 **Vue 프론트엔드를 React로 전환**하는 작업
+- Go 백엔드와 연동하는 CMS 제품 **유지보수 및 신규 구축**
+- 워터마크 삽입 워크플로를 AWS 서비스와 연동하는 **인프라 구성**
+
+#### 핵심 구현
+
+- 고객이 콘텐츠를 업로드하면 워터마크 처리 후 결과를 S3에 저장하는 **비동기 파이프라인** 구축
+- Lambda·Step Functions로 처리 단계를 오케스트레이션하고, API Gateway·RDS로 API·메타데이터 관리
+- React UI에서 업로드 요청·처리 상태 모니터링·결과 확인이 가능하도록 제품 화면 개선
 
 <Mermaid chart={`flowchart LR
-  subgraph streaming [Media Streaming]
-    CMS[CMS]
-    Packager[HLS / DASH Packager]
-    DRM[Widevine DRM]
-    License[Custom License Server]
-  end
+  UI["React UI"] --> Upload["콘텐츠 업로드"]
+  Upload --> WM["워터마크 처리"]
+  WM --> Store["결과 저장"]
+  Store --> S3["S3"]
+  WM -.-> SF["Lambda · Step Functions"]`} />
 
-  subgraph aws [AWS Infrastructure]
-    CFN[CloudFormation]
-    Media[AWS Media Services]
-    CDN[CloudFront]
-  end
+#### 결과
 
-  CMS --> Packager
-  Packager --> DRM
-  DRM --> License
-  CFN --> Media
-  Media --> CDN
-  License --> CDN`} />
+상용 워터마크 CMS 제품의 유지보수와 신규 구축에 기여했고, 프론트엔드 전환과 풀스택 웹 서비스·AWS 운영 경험을 쌓았다.
 
 ---
 
-## 기술적 과제
+### Widevine DRM 스트리밍 PoC
 
-<CaseStudy
-  id="markany-widevine"
-  title="Case 1. Widevine DRM 적용 및 커스텀 라이선스 서버 구현"
-  problem={
-    <>
-      프리미엄 미디어 콘텐츠의 무단 배포 및 불법 다운로드를 방지할
-      암호화 체계가 필요했다.
-    </>
-  }
-  action={
-    <>
-      Widevine DRM을 도입하고, 재생 권한 검증을 위한 커스텀 라이선스
-      서버를 직접 설계·구현했다.
-    </>
-  }
-  application={
-    <>
-      AWS 미디어 서비스와 연동한 HLS/DASH 패키징 및 토큰 기반 보안
-      파이프라인을 구축했다.
-    </>
-  }
-  result={
-    <>
-      콘텐츠 보안성을 극대화하고 안전한 스트리밍 서비스 환경을
-      구축했다.
-    </>
-  }
-/>
+#### 배경
 
-<CaseStudy
-  id="markany-cfn"
-  title="Case 2. CloudFormation을 통한 인프라 프로비저닝 자동화"
-  problem={
-    <>
-      다수의 AWS 리소스를 수동 설정하면서 휴먼 에러가 발생했고, 환경
-      복제에 과도한 시간이 소요되었다.
-    </>
-  }
-  action={
-    <>
-      CloudFormation 기반 IaC를 도입하고 전체 인프라 자동화 템플릿을
-      설계했다.
-    </>
-  }
-  application={<>환경별 재사용 가능한 배포 파이프라인을 구축했다.</>}
-  result={
-    <>
-      인프라 구축 시간을 획기적으로 단축하고 운영 일관성을 확보했다.
-    </>
-  }
-/>
+프리미엄 미디어를 HLS/DASH로 안전하게 송출하려면, 브라우저 재생(EME)부터 인코딩·패키징·DRM·라이선스 발급·CDN 배포까지 **전 구간이 맞물려 동작하는지** 검증해야 했다. 개별 기술을 이해하는 것과 실제 파이프라인으로 묶는 것은 별개의 문제였다.
+
+#### 담당
+
+- W3C **MSE·EME** 스펙 조사 및 데모 플레이어·라이선스 서버 직접 작성
+- **MediaConvert · MediaPackage · CloudFront · Lambda@Edge** 설정 및 연동
+- MediaPackage가 호출할 **커스텀 라이선스 서버** 개발
+- CloudFormation·Step Functions로 인프라·배포 단계 자동화
+
+#### 핵심 구현
+
+- 원본 영상 인코딩 → Widevine DRM 패키징 → CDN 배포 → 브라우저 EME 재생 → 라이선스 키 발급까지 **PoC 파이프라인** 구성
+- 브라우저 측에서는 MSE로 세그먼트를 조립하고 EME로 복호화 키를 요청하는 흐름을 데모 플레이어로 검증
+- AWS 측에서는 MediaPackage가 생성한 매니페스트·세그먼트를 CloudFront로 배포하고, 재생 시 라이선스 서버와 키 교환
+
+<Mermaid chart={`flowchart LR
+  Source["원본 영상"] --> MC["MediaConvert"]
+  MC --> MPkg["MediaPackage"]
+  MPkg --> WV["Widevine DRM"]
+  WV --> LE["Lambda@Edge"]
+  LE --> CDN["CloudFront"]
+  CDN --> EME["EME Player"]
+  EME <-->|"키 요청"| Lic["License Server"]`} />
+
+#### 관련 글
+
+- [영상은 어떻게 저장되고, HLS·DASH는 무엇인가](/post/computer/media/video-basics)
+- [HLS와 DASH — 적응형 스트리밍 포맷 이해하기](/post/computer/media/hls-dash)
+- [MSE와 EME — 브라우저에서 암호화 미디어 재생하기](/post/computer/media/mse-eme)
+- [AWS로 Widevine DRM 스트리밍 파이프라인 구축하기](/post/computer/aws/media-streaming-drm)
+- [AWS Lambda에 VPC 설정하기](/post/computer/aws/lambda/vpc-setting)
+
+#### 결과
+
+암호화된 HLS/DASH 스트리밍 재생을 end-to-end로 검증했고, 미디어 포맷·브라우저 DRM API·AWS 미디어 서비스에 대한 이해를 확보했다.
 
 ---
 
-## 업데이트 로그
+### PDF 워터마크 — 텍스트 추출
 
-| 날짜 | 추가 / 변경 |
-| --- | --- |
-| 2023-06 | Case 1 — Widevine DRM 및 라이선스 서버 |
-| 2024-03 | Case 2 — CloudFormation IaC |
+#### 배경
+
+PDF 문서에 워터마크를 넣으려면 본문 텍스트의 **위치와 내용**을 알아야 한다. 기존 텍스트와 겹치지 않게 배치하려면 좌표 정보까지 필요했지만, 상용 라이브러리만으로는 제품이 요구하는 수준의 추출·인코딩 처리가 어려웠다.
+
+#### 담당
+
+- PDF 파일 구조를 직접 파싱하는 **구조 파서** 개발
+- 텍스트 스트림에서 글리프 데이터를 추출하는 **텍스트 추출기** 개발
+- CMap 기반 CID 매핑·한글 인코딩 등 **예외 구간 검증**
+
+#### 핵심 구현
+
+- PDF 객체 트리·크로스 레퍼런스 테이블을 따라가며 페이지 콘텐츠 스트림에 접근
+- `Tj`·`TJ` 등 텍스트 연산자를 파싱해 문자열·좌표·폰트 정보 수집
+- 추출 결과(텍스트 + 좌표)를 PDF 워터마크 제품 PoC의 입력 데이터로 전달
+
+<Mermaid chart={`flowchart LR
+  PDF["PDF 파일"] --> Parser["구조 파서"]
+  Parser --> Extract["텍스트 · 좌표 추출"]
+  Extract --> Input["워터마크 PoC"]`} />
+
+#### 관련 글
+
+- [PDF 파일 구조와 텍스트 추출](/post/computer/common/pdf-format)
+- [Codepage, 그리고 한글 인코딩](/post/computer/common/codepage)
+
+#### 결과
+
+PDF 내부 구조를 이해하고 텍스트 추출 파이프라인을 확보했으며, 이후 워터마크 삽입 기능 개발의 기반이 되었다.

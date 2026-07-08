@@ -1,0 +1,161 @@
+---
+title: "Message Queue — Online Judge를 위한 RabbitMQ 선택"
+tags:
+  - Computer
+  - Messaging
+date: "2024-10-05"
+description: "메시지 큐의 개념과 Online Judge에서 RabbitMQ를 선택한 이유, Kafka와의 비교"
+slug: computer/messaging/message-queue
+---
+
+[KNU Online Judge](/post/projects/judge)를 운영하면서 실습 마감 직전 트래픽으로 API 서버가 다운된 경험이 있었다. 채점 요청 수신과 실제 실행을 분리하기 위해 Message Queue를 도입했고, RabbitMQ를 선택했다. 이 글에서는 MQ가 무엇인지, 왜 RabbitMQ였는지, Kafka와 어떻게 다른지 정리한다.
+
+---
+
+## Message Queue란
+
+Message Queue(MQ)는 **애플리케이션 간 메시지를 비동기로 전달**하는 중간 계층이다. 메시지를 보내는 쪽을 **Producer**, 받는 쪽을 **Consumer**, 중간 브로커를 **Broker**라고 부른다.
+
+<Mermaid chart={`flowchart LR
+  P[Producer] -->|"publish"| B[(Broker / Queue)]
+  B -->|"consume"| C1[Consumer 1]
+  B -->|"consume"| C2[Consumer 2]`} />
+
+Producer는 메시지를 큐에 넣고 자기 일을 마친다. Consumer는 큐에서 메시지를 꺼내 처리한다. 이 구조 덕분에 다음 효과를 얻을 수 있다.
+
+| 효과 | 설명 |
+| --- | --- |
+| **비동기 처리** | 요청을 받은 즉시 응답하고, 무거운 작업은 뒤에서 처리 |
+| **부하 분산** | Consumer를 여러 개 띄워 처리량을 수평 확장 |
+| **느슨한 결합** | Producer와 Consumer가 서로의 존재·속도에 직접 의존하지 않음 |
+| **버퍼링** | 순간적인 트래픽 폭주를 큐가 흡수 |
+
+동기 HTTP 호출은 요청-응답이 한 연결에 묶여 있다. 채점처럼 수 초~수십 초 걸리는 작업을 API 핸들러 안에서 직접 실행하면, 동시 접속이 늘수록 스레드·커넥션이 고갈되고 서버 전체가 느려지거나 다운된다. MQ는 이 병목을 **시간축으로 분리**해 해결한다.
+
+---
+
+## Online Judge에서 MQ가 필요했던 이유
+
+Online Judge의 채점 흐름은 대략 다음과 같다.
+
+1. 학생이 코드를 제출한다.
+2. 서버가 코드를 저장하고 채점을 시작한다.
+3. 샌드박스에서 컴파일·실행·테스트케이스 비교를 수행한다.
+4. 결과(맞았습니다, 틀렸습니다, 시간 초과 등)를 DB에 기록한다.
+
+초기에는 2~4단계가 API 요청 안에서 **동기적으로** 실행되었다. 평소에는 문제없었지만, 실습 마감 직전 120명 이상이 동시에 제출하면 API 서버가 채점 실행에 묶여 응답하지 못하는 상황이 반복되었다.
+
+MQ를 도입한 뒤 구조는 이렇게 바뀌었다.
+
+<Mermaid chart={`sequenceDiagram
+  participant C as Client
+  participant A as API Server
+  participant Q as RabbitMQ
+  participant W as Judge Worker
+
+  C->>A: 코드 제출
+  A->>Q: 채점 Job publish
+  A-->>C: 202 Accepted
+  Q->>W: Job consume
+  W->>W: 샌드박스 실행 / 채점
+  W->>A: 결과 저장`} />
+
+API는 Job을 큐에 넣고 바로 `202 Accepted`로 응답한다. 실제 채점은 Judge Worker가 큐에서 Job을 꺼내 처리한다. Worker를 여러 개 띄우면 동시 채점 수를 늘릴 수 있고, 피크 타임에도 API는 가볍게 유지된다.
+
+---
+
+## RabbitMQ를 선택한 이유
+
+메시지 큐 제품은 여러 가지가 있지만, Online Judge에는 **RabbitMQ**가 맞았다. 핵심은 "이 시스템이 무엇을 하는가"에 있다.
+
+### 작업 큐(Work Queue) 패턴에 적합
+
+Online Judge의 채점은 **하나의 Job이 생성 → 처리 → 완료**되는 단위 작업이다. 학생 A의 제출과 학생 B의 제출이 서로 순서에 의존하지 않고, 각 Job을 Worker가 가져가 처리하면 된다. RabbitMQ의 **Work Queue** 패턴이 정확히 이 모델이다.
+
+- 큐에 Job을 publish
+- Worker pool이 round-robin으로 consume
+- 처리 완료 후 ACK(acknowledgement)로 큐에서 제거
+
+### 운영 복잡도
+
+교내 강의용 Online Judge는 팀 규모가 크지 않고, 인프라도 Docker Compose 수준으로 운영한다. RabbitMQ는 단일 브로커로도 충분히 안정적으로 동작하고, 큐·Exchange·Binding 개념이 직관적이다. 채점 Job 하나를 큐에 넣고 Worker가 가져가는 흐름을 빠르게 구현·검증할 수 있었다.
+
+### Job 단위 제어
+
+채점 Job은 실패 시 재시도, 처리 완료 확인(ACK), 필요 시 Dead Letter Queue로 격리하는 것이 중요하다. RabbitMQ는 메시지 단위 ACK/NACK, prefetch count, TTL, priority queue 등 **개별 메시지 수준의 제어**를 기본적으로 지원한다. "이 제출 건을 다시 채점해라"는 요구에 맞는 단위다.
+
+### 트래픽 규모에 맞는 선택
+
+Online Judge의 피크는 강의 실습 마감 시 수백 건의 동시 제출 정도다. 초당 수십만 건의 이벤트를 장기간 보관·재생해야 하는 규모는 아니다. RabbitMQ는 이런 **중소 규모의 작업 큐**에 최적화되어 있고, 불필요하게 무거운 인프라를 들이지 않아도 된다.
+
+---
+
+## RabbitMQ vs Kafka
+
+Kafka와 RabbitMQ는 둘 다 "메시지를 전달한다"는 점에서 비슷하지만, 설계 철학과 적합한 사용 사례가 다르다.
+
+### 설계 철학
+
+| | RabbitMQ | Kafka |
+| --- | --- | --- |
+| **모델** | 메시지 브로커 (큐 기반) | 분산 커밋 로그 (이벤트 스트림) |
+| **메시지 수명** | Consumer가 ACK하면 삭제 (또는 TTL) | 보존 기간 동안 로그에 유지 |
+| **소비 방식** | 큐에서 꺼내 처리 (push / pull) | 오프셋 기반으로 구독·재생 |
+| **순서 보장** | 단일 큐 내 순서 | 파티션 내 순서 |
+| **확장** | 클러스터, 미러 큐 | 파티션 수평 확장 |
+| **대표 사용 사례** | 작업 큐, RPC, 실시간 알림 | 이벤트 소싱, 로그 수집, 스트림 처리 |
+
+<Mermaid chart={`flowchart TB
+  subgraph rabbit [RabbitMQ — Work Queue]
+    RP[Producer] --> RQ[(Queue)]
+    RQ --> RW1[Worker]
+    RQ --> RW2[Worker]
+  end
+
+  subgraph kafka [Kafka — Event Stream]
+    KP[Producer] --> KT[Topic / Partition Log]
+    KT --> KC1[Consumer Group A]
+    KT --> KC2[Consumer Group B]
+  end`} />
+
+RabbitMQ는 "이 Job을 처리해"에 가깝고, Kafka는 "이 일이 발생했다"는 이벤트를 로그에 쌓아 여러 소비자가 각자 속도로 읽는 구조에 가깝다.
+
+### Online Judge 관점에서의 비교
+
+| 기준 | RabbitMQ | Kafka |
+| --- | --- | --- |
+| **채점 Job 처리** | Work Queue 패턴에 자연스럽게 맞음 | 가능하지만 작업 큐 용도로는 과한 설계 |
+| **메시지 재생** | 처리 후 삭제 — 재채점은 새 Job 발행 | 오프셋 되돌려 재생 가능 — 채점에는 불필요 |
+| **운영 부담** | 단일 브로커로 시작 가능 | ZooKeeper/KRaft, 파티션·토픽 설계 필요 |
+| **지연 시간** | 개별 메시지 단위로 낮은 지연 | 배치 기반으로 처리량은 높지만 단건 지연은 상대적으로 큼 |
+| **적합 규모** | 수백~수천 TPS의 작업 큐 | 초당 수십만~수백만 이벤트 스트림 |
+
+Online Judge에서 필요한 것은 "제출된 코드를 빠르게 채점하고 결과를 저장하는 것"이다. 과거 제출 이벤트를 여러 downstream 서비스가 각각 구독하거나, 수개월치 이벤트 로그를 재생해야 하는 요구는 없다. Kafka의 강점인 **이벤트 스트림 보관·재생·다중 소비자**는 이 프로젝트에서 활용할 여지가 적다.
+
+반면 RabbitMQ는 다음에 딱 맞는다.
+
+- 제출 1건 = 채점 Job 1건
+- Worker pool이 Job을 분산 처리
+- 처리 완료 후 ACK로 큐에서 제거
+- 실패 시 NACK 또는 DLQ로 재시도·격리
+
+### Kafka가 더 나은 경우
+
+Kafka를 선택하는 것이 맞는 상황도 분명히 있다. 예를 들면:
+
+- 사용자 행동 로그, 결제 이벤트 등 **대량 이벤트를 장기 보관**해야 할 때
+- 여러 마이크로서비스가 **같은 이벤트 스트림을 각자 소비**할 때
+- Flink, Spark Streaming 등으로 **실시간 스트림 처리**를 할 때
+- 초당 수만 건 이상의 **쓰기 처리량**이 필요할 때
+
+Online Judge의 채점 파이프라인은 이 범주에 들지 않는다.
+
+---
+
+## 정리
+
+Message Queue는 요청 처리와 무거운 작업 실행을 분리해, 트래픽 피크에도 API를 안정적으로 유지하는 데 핵심적인 역할을 한다.
+
+Online Judge에서는 채점이라는 **단위 작업을 Worker pool에 분산**하는 Work Queue 패턴이 필요했고, RabbitMQ가 이 패턴을 가장 직접적으로 구현할 수 있는 선택이었다. Kafka는 훌륭한 이벤트 스트리밍 플랫폼이지만, 교내 강의용 채점 시스템의 규모와 요구사항에는 RabbitMQ가 더 적합했다.
+
+실제 적용 결과와 시스템 구조는 [KNU Online Judge](/post/projects/judge) 프로젝트 글에서 확인할 수 있다.

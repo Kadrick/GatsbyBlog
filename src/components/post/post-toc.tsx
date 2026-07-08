@@ -24,13 +24,6 @@ const ensureHeadingIds = (root: HTMLElement) => {
   const used = new Set<string>();
 
   root.querySelectorAll<HTMLElement>("h2, h3, h4").forEach((el) => {
-    if (
-      (el.tagName === "H3" || el.tagName === "H4") &&
-      el.closest("section[id]")
-    ) {
-      return;
-    }
-
     if (el.id) {
       used.add(el.id);
       return;
@@ -52,33 +45,15 @@ const collectTocItems = (root: HTMLElement): TocItem[] => {
   ensureHeadingIds(root);
 
   const toc: TocItem[] = Array.from(
-    root.querySelectorAll<HTMLElement>("h2[id], h3[id], h4[id], section[id]")
-  )
-    .filter((el) => {
-      if (
-        (el.tagName === "H3" || el.tagName === "H4") &&
-        el.closest("section[id]")
-      ) {
-        return false;
-      }
-      return true;
-    })
-    .map((el) => {
-      if (el.tagName === "SECTION") {
-        const heading = el.querySelector("h2, h3");
-        return {
-          id: el.id,
-          text: heading?.textContent?.trim() || el.id,
-          level: 2 as const,
-        };
-      }
-      const level = el.tagName === "H2" ? 2 : el.tagName === "H3" ? 3 : 4;
-      return {
-        id: el.id,
-        text: el.textContent?.trim() || el.id,
-        level: level as 2 | 3 | 4,
-      };
-    });
+    root.querySelectorAll<HTMLElement>("h2[id], h3[id], h4[id]")
+  ).map((el) => {
+    const level = el.tagName === "H2" ? 2 : el.tagName === "H3" ? 3 : 4;
+    return {
+      id: el.id,
+      text: el.textContent?.trim() || el.id,
+      level: level as 2 | 3 | 4,
+    };
+  });
 
   const seen = new Set<string>();
   return toc.filter((item) => {
@@ -143,6 +118,8 @@ const PostToc: React.FC<PostTocProps> = ({ contentRef }) => {
       top={"80px"}
       maxH={"calc(100vh - 100px)"}
       overflowY={"auto"}
+      overflowX={"hidden"}
+      w={"100%"}
     >
       <Text
         fontSize={"xs"}
@@ -158,12 +135,14 @@ const PostToc: React.FC<PostTocProps> = ({ contentRef }) => {
           <Link
             key={item.id}
             href={`#${item.id}`}
+            display={"block"}
             fontSize={item.level === 4 ? "xs" : "sm"}
             pl={item.level === 2 ? 0 : item.level === 3 ? 3 : 6}
             py={1}
             lineHeight={"1.5"}
             color={activeId === item.id ? "red.500" : "gray.600"}
             fontWeight={activeId === item.id ? "medium" : "normal"}
+            overflowWrap={"anywhere"}
             _hover={{ color: "red.500", textDecoration: "none" }}
             onClick={(e) => {
               e.preventDefault();

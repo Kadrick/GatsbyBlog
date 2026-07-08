@@ -1,8 +1,8 @@
 ---
 title: "NHN Cloud"
 tags: ["Experience"]
-date: "2025-12-01"
-description: "AWX 도입 리서치, Vault HA 버전 충돌 검증, Zero Trust Rego 클라이언트 PoC"
+date: "2025-10-31"
+description: "AWX 도입 리서치, Vault HA 버전 충돌 검증, OPA 기능 리서치"
 slug: "experience/nhn-cloud"
 cover: "works/projects.png"
 draft: false
@@ -10,160 +10,126 @@ draft: false
 
 ## 개요
 
-- **역할:** 인턴 — 클라우드 인프라 검증 및 아키텍처 PoC
-- **기간:** 2025.07 ~ 2025.12
+- 역할: 인턴 — 클라우드 인프라 검증 및 아키텍처 PoC
+- 기간: 2025.07 ~ 2025.10
 
-Ansible 운영 자동화(AWX), 시크릿 관리(Vault HA), Zero Trust 정책(Rego/OPA) 세 영역에서 **독립적인 PoC·리서치**를 수행했다. 각 과제는 서로 다른 목적과 환경에서 진행되었다.
+클라우드 인프라 운영 자동화·시크릿 관리·보안 정책 세 영역에서 아래 세 가지 PoC·리서치를 수행했다.
+
+| 업무 | 내용 |
+| --- | --- |
+| AWX 도입 리서치 | Python 기반 Ansible 운영 현황 분석 · AWX Operator로 K8s 파일럿 구축 |
+| Vault HA 검증 | Active-Standby HA에서 버전 불일치 시나리오 재현·기록 |
+| OPA 리서치 | Bundle 등 OPA 핵심 기능을 직접 써보며 보안 상품 방향 검토 |
+
+각 업무는 배경 · 담당 · 핵심 구현 · 결과 순으로 정리했다.
 
 ---
 
-## 기술적 과제
+## 업무
 
-<CaseStudy
-  id="nhn-awx-research"
-  title="Case 1. AWX 도입 검토를 위한 기술 리서치 및 파일럿 검증"
-  problem={
-    <>
-      Ansible 운영이 터미널·수동 실행에 의존해 스케줄링·모니터링·작업 이력 추적이
-      어려웠고, AWX 도입 시 기대 효과와 운영 부담에 대한 근거가 부족했다.
-    </>
-  }
-  action={
-    <>
-      AWX와 Ansible Operator 기반 배포 모델을 조사하고, Kubernetes 파일럿
-      환경을 구성해 GUI 기반 작업 실행·스케줄링을 검증했다. 백오피스
-      관리 코드에는 go test 기반 단위 테스트를 도입해 자동화 신뢰성도 함께
-      점검했다.
-    </>
-  }
-  application={
-    <>
-      파일럿 클러스터에서 AWX Controller → Ansible Playbook → 대상 노드
-      흐름을 재현하고, 운영 시나리오(스케줄 Job, 작업 로그, RBAC)별
-      체크리스트를 작성했다.
-    </>
-  }
-  result={
-    <>
-      AWX 도입 여부를 판단할 수 있는 기술 리포트와 파일럿 결과를 정리했고,
-      인프라 운영 자동화 로드맵 논의에 활용 가능한 근거를 마련했다.
-    </>
-  }
-/>
+### AWX 도입 리서치
+
+#### 배경
+
+내부에서는 Ansible을 Python 코드로 직접 호출해 인프라 작업을 자동화하고 있었다. Playbook 실행 자체는 안정적이었지만, 스케줄링·실행 이력·모니터링을 한곳에서 관리하기 어려웠다. AWX(Ansible Automation Platform의 오픈소스 UI) 도입이 이 문제를 해소할 수 있는지 검토하기로 했다.
+
+#### 담당
+
+- 기존 Python + Ansible 운영 방식과 AWX의 역할·기대 효과 조사
+- AWX Operator 기반 Kubernetes 배포 모델 리서치
+- 파일럿 클러스터에 AWX를 띄워 GUI 기반 Job 실행·스케줄링 검증
+
+#### 핵심 구현
+
+- AWX Controller → Ansible Playbook → 대상 노드 흐름을 K8s 파일럿 환경에서 재현
+- Operator CRD로 AWX 인스턴스를 선언적으로 배포하고, 기존 Playbook을 AWX Job Template에 연결
+- 스케줄 Job, 작업 로그, RBAC 등 운영 시나리오별 체크리스트 작성
 
 <Mermaid chart={`flowchart LR
-  subgraph research [AWX 도입 리서치]
-    Docs[기술 조사 / 비교]
-    Operator[AWX Operator]
-    AWX[AWX Controller]
-    Ansible[Ansible Playbooks]
-    K8sPilot[K8s 파일럿 Cluster]
-    Backoffice[백오피스 관리 시스템]
-  end
+  Python["Python Ansible 호출"] -.->|"기존 운영"| Nodes["대상 노드"]
+  Operator["AWX Operator"] --> AWX["AWX Controller"]
+  AWX --> Playbook["Ansible Playbooks"]
+  Playbook --> K8s["K8s 파일럿 Cluster"]
+  Playbook --> Nodes`} />
 
-  Docs --> Operator
-  Operator --> AWX
-  AWX --> Ansible
-  Ansible --> K8sPilot
-  Ansible --> Backoffice`} />
+#### 관련 글
 
-<CaseStudy
-  id="nhn-vault-ha-version"
-  title="Case 2. Vault HA 구성을 위한 버전 충돌 시나리오 검증"
-  problem={
-    <>
-      Vault를 Active-Standby HA로 운영할 때, 노드 간 버전 불일치가 발생하면
-      복제·failover 과정에서 장애로 이어질 수 있었고, 업그레이드·롤백
-      절차에 대한 사전 검증 체계가 없었다.
-    </>
-  }
-  action={
-    <>
-      Vault Active-Standby HA 클러스터를 별도 PoC 환경에 구성하고, 의도적으로
-      버전을 다르게 맞춘 뒤 복제 지연·failover·롤백 시나리오를
-      재현·기록했다.
-    </>
-  }
-  application={
-    <>
-      시나리오별(정상 동기화 / minor 버전 차 / major 버전 차) 관측 항목과
-      복구 절차를 체크리스트로 정리해, 향후 프로덕션 HA 설계 시 참고
-      자료로 활용했다.
-    </>
-  }
-  result={
-    <>
-      버전 정합성을 HA 운영의 전제 조건으로 명시할 수 있는 근거를 확보했고,
-      무중단 업그레이드 전략 수립에 필요한 실측 데이터를 제공했다.
-    </>
-  }
-/>
+- [Ansible과 AWX — 운영 자동화와 중앙 관리](/post/computer/infrastructure/ansible-awx)
+
+#### 결과
+
+AWX 파일럿 환경 구축과 운영 시나리오 검증 과정을 정리했다.
+
+---
+
+### Vault HA 버전 검증
+
+#### 배경
+
+Vault를 Active-Standby HA로 운영하려면 노드 간 버전 정합성이 중요하다. 업그레이드·롤백 과정에서 의도치 않게 버전이 어긋나면 복제 지연이나 failover 장애로 이어질 수 있었고, 서로 다른 버전의 Vault가 HA 옵션으로 실제로 동작하는지에 대한 사전 검증이 필요했다.
+
+#### 담당
+
+- Vault Active-Standby HA 클러스터를 별도 PoC 환경에 구성
+- 노드 간 Vault 버전을 의도적으로 다르게 맞춘 뒤 복제·failover·롤백 시나리오 재현
+- 시나리오별 관측 항목과 복구 절차를 체크리스트로 정리
+
+#### 핵심 구현
+
+- 정상 동기화 / minor 버전 차 / major 버전 차 세 가지 시나리오를 분리해 테스트
+- Active ↔ Standby 복제 상태, seal·unseal, leader 선출 과정을 단계별로 기록
+- 버전별 동작 차이를 PoC 노트로 정리
 
 <Mermaid chart={`flowchart TB
-  subgraph vault [Vault HA PoC — 별도 환경]
-    Active[Vault Active vN]
-    Standby[Vault Standby vN-1]
-    Test[버전 충돌 시나리오 테스트]
-    Failover[Failover / 롤백 검증]
-  end
+  Active["Vault Active vN"]
+  Standby["Vault Standby vN±1"]
+  Test["버전 충돌 시나리오"]
+  Failover["Failover / 롤백 검증"]
 
-  Active <-->|복제| Standby
+  Active <-->|"복제"| Standby
   Test --> Active
   Test --> Standby
   Failover --> Active`} />
 
-<CaseStudy
-  id="nhn-zero-trust-rego"
-  title="Case 3. Zero Trust 상품 방향성 검증 — Rego 기반 OPA 클라이언트 PoC"
-  problem={
-    <>
-      Zero Trust 상품에 필요한 동적 정책 정의·평가·클라이언트 연동 구조가
-      없었고, Rego 정책을 실제 워크로드에 적용했을 때의 동작과 운영
-      복잡도를 사전에 알 수 없었다.
-    </>
-  }
-  action={
-    <>
-      OPA를 정책 엔진으로 두고 Rego로 접근 제어·네트워크 정책 샘플을
-      작성했다. 별도 K8s PoC 클러스터에 OPA/Gatekeeper 클라이언트를
-      배포해 정책 평가·위반 차단 흐름을 검증했다.
-    </>
-  }
-  application={
-    <>
-      정책 요청 → OPA Rego 평가 → allow/deny 결과 → 클라이언트(Admission /
-      Sidecar) 반영 파이프라인을 구성하고, 대표 유스케이스 3종을 PoC
-      시나리오로 문서화했다.
-    </>
-  }
-  result={
-    <>
-      Zero Trust 상품 기획·개발에 참고할 수 있는 Rego/OPA 레퍼런스
-      아키텍처와 정책 작성 가이드를 확보했다.
-    </>
-  }
-/>
+#### 관련 글
 
-<Mermaid chart={`flowchart LR
-  subgraph zt [Zero Trust Rego PoC — 별도 K8s Cluster]
-    Client[OPA Client / Gatekeeper]
-    OPA[OPA Policy Engine]
-    Rego[Rego Policy Bundle]
-    Workload[Sample Workloads]
-  end
+- [Vault와 HA 구성](/post/computer/infrastructure/vault-ha)
 
-  Workload -->|정책 평가 요청| Client
-  Client --> OPA
-  OPA --> Rego
-  OPA -->|allow / deny| Client
-  Client --> Workload`} />
+#### 결과
+
+버전 불일치 시나리오별 테스트 과정과 관측 결과를 정리했다.
 
 ---
 
-## 업데이트 로그
+### OPA 리서치
 
-| 날짜 | 추가 / 변경 |
-| --- | --- |
-| 2025-08 | Case 1 — AWX 도입 리서치 및 파일럿 검증 |
-| 2025-10 | Case 2 — Vault HA 버전 충돌 시나리오 검증 |
-| 2025-11 | Case 3 — Zero Trust Rego/OPA 클라이언트 PoC |
+#### 배경
+
+Zero Trust 기반 보안 상품을 검토하려면 정책을 선언적으로 정의하고 런타임에 평가하는 엔진이 필요했다. Gatekeeper 같은 응용 사례를 바로 도입하기보다, OPA(Open Policy Agent) 자체가 제공하는 기능을 이해하는 것이 먼저라고 판단했다.
+
+#### 담당
+
+- Rego로 샘플 정책 작성 및 `opa eval`로 평가 흐름 확인
+- Bundle로 정책을 묶어 배포·로드하는 방식 실습
+- REST API, Decision Log 등 OPA 핵심 기능을 하나씩 써보며 동작 정리
+
+#### 핵심 구현
+
+- `opa run`으로 로컬에서 정책 서버를 띄우고 입력 JSON에 대한 allow/deny 결과 확인
+- `opa build`로 Rego 정책을 Bundle 아티팩트로 패키징하고, OPA에 로드해 정책 교체 흐름 검증
+- 보안 상품에 쓸 수 있는지 판단하기 위해 기능별(평가 API, Bundle 배포, 로깅) 메모 정리
+
+<Mermaid chart={`flowchart LR
+  Rego["Rego Policy"] --> Build["opa build"]
+  Build --> Bundle["Policy Bundle"]
+  Bundle --> OPA["OPA Server"]
+  Input["입력 JSON"] -->|"POST /v1/data"| OPA
+  OPA -->|"allow / deny"| Result["평가 결과"]`} />
+
+#### 관련 글
+
+- [OPA와 Rego 이해하기](/post/computer/security/opa-rego)
+
+#### 결과
+
+OPA 기능별 실습과 리서치 노트를 정리했다.

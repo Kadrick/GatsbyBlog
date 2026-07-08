@@ -3,7 +3,7 @@ import React from "react";
 import Tab from "../layout/tab";
 import HorizontalCard from "../components/common/horizontal-card";
 
-import { Container, VStack } from "@chakra-ui/react";
+import { Box, VStack } from "@chakra-ui/react";
 
 type WorkItem = {
   id: number;
@@ -40,7 +40,7 @@ const Items: WorkItem[] = [
 const Works: React.FC = () => {
   return (
     <Tab tabName={"Works"} description={"일한 것들 정리함"}>
-      <Container mt={"70px"} maxW={"1400px"} pb={"80px"}>
+      <Box w={"100%"} mt={"70px"}>
         <VStack spacing={4} align={"stretch"}>
           {Items.map((item) => (
             <HorizontalCard
@@ -52,7 +52,7 @@ const Works: React.FC = () => {
             />
           ))}
         </VStack>
-      </Container>
+      </Box>
     </Tab>
   );
 };

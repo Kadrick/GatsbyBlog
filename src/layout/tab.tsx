@@ -3,6 +3,7 @@ import React from "react";
 import Basic from "./basic";
 import { Container, Heading, Text } from "@chakra-ui/react";
 import Seo from "./seo";
+import { TAB_CONTENT_MAX_W } from "./tab-content-width";
 
 type LayoutProps = {
   tabName: string;
@@ -18,7 +19,15 @@ const Tab: React.FC<LayoutProps> = ({ tabName, description, children }) => {
         <Heading as={"h2"}>{tabName}</Heading>
         {description && <Text>{description}</Text>}
       </Container>
-      <Container w={"100vw"} centerContent>{children}</Container>
+      <Container
+        maxW={TAB_CONTENT_MAX_W}
+        w={"100%"}
+        mx={"auto"}
+        px={{ base: 4, md: 6, lg: 8 }}
+        pb={{ base: 8, md: 10 }}
+      >
+        {children}
+      </Container>
     </Basic>
   );
 };
